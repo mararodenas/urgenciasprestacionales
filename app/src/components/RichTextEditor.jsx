@@ -1,5 +1,30 @@
 import { useRef, useEffect } from 'react';
 
+// Cuando se indenta/desindenta dentro de una lista, el navegador a veces
+// corta la lista en dos <ol>/<ul> separadas en vez de continuarla (por eso
+// la numeración se reinicia). Esto las vuelve a fusionar si quedan
+// adyacentes y son del mismo tipo.
+function fusionarListasAdyacentes(root) {
+  function fusionarHijos(parent) {
+    const children = Array.from(parent.children);
+    for (let i = children.length - 1; i > 0; i--) {
+      const cur = children[i];
+      const prev = children[i - 1];
+      if (cur.tagName === prev.tagName && (cur.tagName === 'OL' || cur.tagName === 'UL')) {
+        while (cur.firstChild) prev.appendChild(cur.firstChild);
+        cur.remove();
+      }
+    }
+  }
+  function recorrer(node) {
+    fusionarHijos(node);
+    Array.from(node.children).forEach((child) => {
+      if (['LI', 'OL', 'UL', 'DIV', 'P'].includes(child.tagName)) recorrer(child);
+    });
+  }
+  recorrer(root);
+}
+
 // value/onChange manejan HTML simple (b, i, u, ul/ol/li anidables, p, br).
 export default function RichTextEditor({ value, onChange, onBlurSave, placeholder, minHeight = 100 }) {
   const ref = useRef(null);
@@ -8,12 +33,16 @@ export default function RichTextEditor({ value, onChange, onBlurSave, placeholde
   useEffect(() => {
     if (ref.current && !isFocused.current && ref.current.innerHTML !== (value || '')) {
       ref.current.innerHTML = value || '';
+      fusionarListasAdyacentes(ref.current);
     }
   }, [value]);
 
   function exec(cmd, val = null) {
     ref.current?.focus();
     document.execCommand(cmd, false, val);
+    if (['indent', 'outdent', 'insertOrderedList', 'insertUnorderedList'].includes(cmd)) {
+      fusionarListasAdyacentes(ref.current);
+    }
     onChange(ref.current.innerHTML);
   }
 
@@ -65,6 +94,7 @@ export default function RichTextEditor({ value, onChange, onBlurSave, placeholde
         onKeyDown={handleKeyDown}
         onBlur={() => {
           isFocused.current = false;
+          fusionarListasAdyacentes(ref.current);
           onChange(ref.current.innerHTML);
           if (onBlurSave) onBlurSave(ref.current.innerHTML);
         }}
