@@ -7,7 +7,7 @@ export default function ExpedientesList() {
   const [expedientes, setExpedientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
-  const [filtro, setFiltro] = useState('abiertos');
+  const [filtro, setFiltro] = useState('activos');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,8 +26,10 @@ export default function ExpedientesList() {
 
   const filtrados = useMemo(() => {
     let list = expedientes;
-    if (filtro === 'abiertos') list = list.filter((e) => !e.fecha_cierre);
-    if (filtro === 'cerrados') list = list.filter((e) => e.fecha_cierre);
+    if (filtro === 'activos') list = list.filter((e) => e.estado !== 'Cerrado');
+    if (filtro === 'abiertos') list = list.filter((e) => e.estado === 'Abierto');
+    if (filtro === 'pendientes') list = list.filter((e) => e.estado === 'Pendiente');
+    if (filtro === 'cerrados') list = list.filter((e) => e.estado === 'Cerrado');
     const q = query.trim().toLowerCase();
     if (q) {
       list = list.filter(
@@ -61,7 +63,9 @@ export default function ExpedientesList() {
         />
         <div style={{ display: 'flex', gap: 6 }}>
           {[
+            ['activos', 'Activos'],
             ['abiertos', 'Abiertos'],
+            ['pendientes', 'Pendientes'],
             ['cerrados', 'Cerrados'],
             ['todos', 'Todos'],
           ].map(([key, label]) => (
@@ -95,6 +99,7 @@ export default function ExpedientesList() {
               <th>Patología</th>
               <th>Ingreso</th>
               <th>Fecha límite</th>
+              <th>Estado</th>
               <th>Informe</th>
             </tr>
           </thead>
@@ -112,7 +117,8 @@ export default function ExpedientesList() {
                   <td>{e.obras_sociales?.nombre ?? '—'}</td>
                   <td>{e.patologias?.nombre ?? '—'}</td>
                   <td>{formatFecha(e.fecha_ingreso)}</td>
-                  <td><DeadlinePill urg={urg} fecha={e.fecha_limite} /></td>
+                  <td><DeadlinePill urg={urg} /></td>
+                  <td><EstadoPill estado={e.estado} /></td>
                   <td>
                     {e.informes?.length ? (
                       e.informes.map((i) => i.tipo).join(', ')
@@ -130,10 +136,16 @@ export default function ExpedientesList() {
   );
 }
 
-function DeadlinePill({ urg, fecha }) {
-  if (urg.nivel === 'cerrado') return <span className="deadline-pill sin-dato">Cerrado</span>;
+function DeadlinePill({ urg }) {
+  if (urg.nivel === 'cerrado') return <span className="deadline-pill sin-dato">—</span>;
   if (urg.nivel === 'sin-dato') return <span className="deadline-pill sin-dato">Sin fecha</span>;
   const label =
     urg.dias < 0 ? `Vencido hace ${Math.abs(urg.dias)}d` : `Vence en ${urg.dias}d`;
   return <span className={`deadline-pill ${urg.nivel}`}>{label}</span>;
+}
+
+function EstadoPill({ estado }) {
+  if (estado === 'Cerrado') return <span className="deadline-pill sin-dato">Cerrado</span>;
+  if (estado === 'Pendiente') return <span className="deadline-pill proximo">Pendiente</span>;
+  return <span className="deadline-pill ok">Abierto</span>;
 }

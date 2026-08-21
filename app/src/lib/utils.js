@@ -7,9 +7,9 @@ export function diasHasta(fechaISO) {
   return Math.round(ms / (1000 * 60 * 60 * 24));
 }
 
-// Estado de urgencia respecto de fecha_limite, solo si el expediente sigue abierto.
+// Estado de urgencia respecto de fecha_limite, solo si el expediente sigue abierto/pendiente.
 export function urgenciaExpediente(exp) {
-  if (exp.fecha_cierre) return { nivel: 'cerrado', dias: null };
+  if (exp.estado === 'Cerrado') return { nivel: 'cerrado', dias: null };
   if (!exp.fecha_limite) return { nivel: 'sin-dato', dias: null };
   const dias = diasHasta(exp.fecha_limite);
   if (dias < 0) return { nivel: 'vencido', dias };

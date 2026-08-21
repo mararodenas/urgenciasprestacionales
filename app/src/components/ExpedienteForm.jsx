@@ -14,6 +14,7 @@ const emptyForm = {
   fecha_ingreso: '',
   fecha_limite: '',
   fecha_cierre: '',
+  estado: 'Abierto',
   nombre_paciente: '',
   dni_cuit_paciente: '',
   telefono_paciente: '',
@@ -405,6 +406,14 @@ export default function ExpedienteForm() {
           <div className="field">
             <label>Fecha de cierre</label>
             <input type="date" value={form.fecha_cierre ?? ''} onChange={(e) => setField('fecha_cierre', e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Estado</label>
+            <select value={form.estado ?? 'Abierto'} onChange={(e) => setField('estado', e.target.value)}>
+              <option value="Abierto">Abierto</option>
+              <option value="Pendiente">Pendiente (esperando OS/EMP o afiliado)</option>
+              <option value="Cerrado">Cerrado</option>
+            </select>
           </div>
         </div>
 
