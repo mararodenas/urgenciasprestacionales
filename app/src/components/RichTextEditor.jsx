@@ -7,6 +7,13 @@ const ESTILOS_VINETA = [
   { valor: 'circle', icono: '○', nombre: 'Círculo' },
 ];
 
+const TAMANOS_FUENTE = [
+  { valor: '2', nombre: 'Pequeña' },
+  { valor: '3', nombre: 'Normal' },
+  { valor: '5', nombre: 'Grande' },
+  { valor: '6', nombre: 'Muy grande' },
+];
+
 // Cuando se indenta/desindenta dentro de una lista, el navegador a veces
 // corta la lista en dos <ol>/<ul> separadas en vez de continuarla (por eso
 // la numeración se reinicia). Esto las vuelve a fusionar si quedan
@@ -37,6 +44,7 @@ export default function RichTextEditor({ value, onChange, onBlurSave, placeholde
   const ref = useRef(null);
   const isFocused = useRef(false);
   const [menuVinetaAbierto, setMenuVinetaAbierto] = useState(false);
+  const [menuTamanoAbierto, setMenuTamanoAbierto] = useState(false);
 
   useEffect(() => {
     if (ref.current && !isFocused.current && ref.current.innerHTML !== (value || '')) {
@@ -78,6 +86,11 @@ export default function RichTextEditor({ value, onChange, onBlurSave, placeholde
     onChange(ref.current.innerHTML);
   }
 
+  function aplicarTamano(valor) {
+    exec('fontSize', valor);
+    setMenuTamanoAbierto(false);
+  }
+
   function estaEnLista() {
     const sel = window.getSelection();
     if (!sel.rangeCount) return false;
@@ -100,12 +113,62 @@ export default function RichTextEditor({ value, onChange, onBlurSave, placeholde
     }
   }
 
+  function insertarImagen(dataUrl) {
+    ref.current?.focus();
+    document.execCommand(
+      'insertHTML',
+      false,
+      `<img src="${dataUrl}" style="max-width:100%;display:block;margin:8px 0;" />`
+    );
+    onChange(ref.current.innerHTML);
+  }
+
+  function handlePaste(e) {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const imagenes = Array.from(items).filter((it) => it.type.startsWith('image/'));
+    if (!imagenes.length) return;
+    e.preventDefault();
+    imagenes.forEach((item) => {
+      const file = item.getAsFile();
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => insertarImagen(reader.result);
+      reader.readAsDataURL(file);
+    });
+  }
+
   return (
     <div className="rte">
       <div className="rte-toolbar">
         <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => exec('bold')} title="Negrita"><strong>N</strong></button>
         <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => exec('italic')} title="Itálica"><em>I</em></button>
         <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => exec('underline')} title="Subrayado"><u>S</u></button>
+        <span className="rte-sep" />
+        <div style={{ position: 'relative' }}>
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => setMenuTamanoAbierto((v) => !v)}
+            title="Tamaño de letra"
+          >
+            Aa ▾
+          </button>
+          {menuTamanoAbierto && (
+            <div className="rte-dropdown">
+              {TAMANOS_FUENTE.map((op) => (
+                <div
+                  key={op.valor}
+                  className="rte-dropdown-item"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => aplicarTamano(op.valor)}
+                >
+                  {op.nombre}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         <span className="rte-sep" />
         <div style={{ position: 'relative' }}>
           <button
@@ -143,10 +206,11 @@ export default function RichTextEditor({ value, onChange, onBlurSave, placeholde
         style={{ minHeight }}
         contentEditable
         suppressContentEditableWarning
-        data-placeholder={placeholder}
+        data-placeholder={placeholder ? `${placeholder} (también podés pegar una imagen con Ctrl+V)` : 'También podés pegar una imagen con Ctrl+V'}
         onFocus={() => { isFocused.current = true; }}
         onInput={() => onChange(ref.current.innerHTML)}
         onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
         onBlur={(e) => {
           if (e.relatedTarget && e.currentTarget.parentElement.contains(e.relatedTarget)) return;
           isFocused.current = false;

@@ -570,3 +570,4 @@ a { color: var(--teal); text-decoration: none; }
   padding-left: 22px;
 }
 .rte-content li { margin-bottom: 2px; }
+.rte-content img { max-width: 100%; height: auto; border-radius: 4px; border: 1px solid var(--line); }

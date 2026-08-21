@@ -11,7 +11,7 @@ import { htmlToDocxParagraphs, plainTextToDocxParagraphs } from './htmlToDocx';
 // fundamentacionesHtml: [string] — HTML de "Indicaciones médicas" por droga, mismo orden
 // plantilla: { texto_apertura, texto_cierre_tecnico } | null
 // gestionHtml: string — HTML del campo "Gestión" (texto libre)
-export function generarInformeDocx({
+export async function generarInformeDocx({
   expediente, obraSocial, patologiaNombre, drogas, marcas, fundamentacionesHtml, plantilla, gestionHtml, tipo,
 }) {
   const denuncianteNombre = expediente.denunciante_nombre?.trim() || expediente.nombre_paciente;
@@ -34,9 +34,11 @@ export function generarInformeDocx({
     ],
   });
 
-  const droguerBlocks = drogas.flatMap((droga, i) => {
+  const droguerBlocks = [];
+  for (let i = 0; i < drogas.length; i++) {
+    const droga = drogas[i];
     const marca = marcas[i];
-    return [
+    droguerBlocks.push(
       new Paragraph({
         spacing: { after: 100 },
         children: [
@@ -65,9 +67,11 @@ export function generarInformeDocx({
         spacing: { after: 120 },
         children: [new TextRun({ text: `Indicaciones Médicas y Mecanismo de Acción en: ${patologiaNombre ?? ''}`, bold: true })],
       }),
-      ...htmlToDocxParagraphs(fundamentacionesHtml[i], { emptyText: '(sin fundamentación cargada para esta combinación)' }),
-    ];
-  });
+      ...(await htmlToDocxParagraphs(fundamentacionesHtml[i], { emptyText: '(sin fundamentación cargada para esta combinación)' }))
+    );
+  }
+
+  const gestionParagraphs = await htmlToDocxParagraphs(gestionHtml, { emptyText: '(sin gestión cargada)' });
 
   const doc = new Document({
     sections: [
@@ -94,7 +98,7 @@ export function generarInformeDocx({
 
           new Paragraph({ spacing: { after: 240 }, children: [new TextRun(TRASLADO_FIJO)] }),
 
-          ...htmlToDocxParagraphs(gestionHtml, { emptyText: '(sin gestión cargada)' }),
+          ...gestionParagraphs,
 
           new Paragraph({ spacing: { before: 160 }, children: [new TextRun({ text: CIERRE[tipo], bold: true })] }),
         ],
@@ -102,7 +106,6 @@ export function generarInformeDocx({
     ],
   });
 
-  Packer.toBlob(doc).then((blob) => {
-    saveAs(blob, `${tipo}_${expediente.numero_ee}.docx`);
-  });
+  const blob = await Packer.toBlob(doc);
+  saveAs(blob, `${tipo}_${expediente.numero_ee}.docx`);
 }

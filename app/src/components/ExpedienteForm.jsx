@@ -48,6 +48,7 @@ export default function ExpedienteForm() {
   const [informesGenerados, setInformesGenerados] = useState([]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+  const [generandoInforme, setGenerandoInforme] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [obraSocialModalOpen, setObraSocialModalOpen] = useState(false);
   const [obraSocialModalTipo, setObraSocialModalTipo] = useState('Obra Social');
@@ -339,17 +340,25 @@ export default function ExpedienteForm() {
     const marcasInfo = drogasSeleccionadas.map((d) => marcasCatalogo.find((m) => m.id === d.marca_id) ?? null);
     const fundamentacionesHtml = drogasSeleccionadas.map((d) => d.fundamentacion);
 
-    generarInformeDocx({
-      expediente: form,
-      obraSocial,
-      patologiaNombre: patologia?.nombre,
-      drogas: drogasInfo,
-      marcas: marcasInfo,
-      fundamentacionesHtml,
-      plantilla,
-      gestionHtml: form.pasos_resolucion,
-      tipo,
-    });
+    setGenerandoInforme(tipo);
+    try {
+      await generarInformeDocx({
+        expediente: form,
+        obraSocial,
+        patologiaNombre: patologia?.nombre,
+        drogas: drogasInfo,
+        marcas: marcasInfo,
+        fundamentacionesHtml,
+        plantilla,
+        gestionHtml: form.pasos_resolucion,
+        tipo,
+      });
+    } catch (e) {
+      showToast('Error al generar el informe: ' + e.message);
+      setGenerandoInforme(null);
+      return;
+    }
+    setGenerandoInforme(null);
 
     const { data, error } = await supabase
       .from('informes')
@@ -622,11 +631,11 @@ export default function ExpedienteForm() {
               </select>
             </div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-              <button className="btn btn-secondary" onClick={() => handleGenerarInforme('IFSOL')}>
-                Generar IFSOL (.docx)
+              <button className="btn btn-secondary" onClick={() => handleGenerarInforme('IFSOL')} disabled={!!generandoInforme}>
+                {generandoInforme === 'IFSOL' ? 'Generando...' : 'Generar IFSOL (.docx)'}
               </button>
-              <button className="btn btn-secondary" onClick={() => handleGenerarInforme('IFDER')}>
-                Generar IFDER (.docx)
+              <button className="btn btn-secondary" onClick={() => handleGenerarInforme('IFDER')} disabled={!!generandoInforme}>
+                {generandoInforme === 'IFDER' ? 'Generando...' : 'Generar IFDER (.docx)'}
               </button>
             </div>
             {informesGenerados.length > 0 && (
