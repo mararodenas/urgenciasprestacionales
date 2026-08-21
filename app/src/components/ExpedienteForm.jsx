@@ -260,6 +260,10 @@ export default function ExpedienteForm() {
       showToast('Completá N° EE, fecha de ingreso, afiliado y diagnóstico');
       return;
     }
+    if (form.estado === 'Cerrado' && informesGenerados.length === 0) {
+      showToast('No podés marcar el expediente como Cerrado sin generar antes un informe IFSOL o IFDER');
+      return;
+    }
     setSaving(true);
     const payload = { ...form };
     delete payload.patologias;
@@ -412,7 +416,9 @@ export default function ExpedienteForm() {
             <select value={form.estado ?? 'Abierto'} onChange={(e) => setField('estado', e.target.value)}>
               <option value="Abierto">Abierto</option>
               <option value="Pendiente">Pendiente (esperando OS/EMP o afiliado)</option>
-              <option value="Cerrado">Cerrado</option>
+              <option value="Cerrado" disabled={informesGenerados.length === 0}>
+                Cerrado{informesGenerados.length === 0 ? ' (generá un informe primero)' : ''}
+              </option>
             </select>
           </div>
         </div>
