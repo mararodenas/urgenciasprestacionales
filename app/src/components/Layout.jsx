@@ -19,6 +19,9 @@ export default function Layout() {
           <NavLink to="/catalogo" className={({ isActive }) => (isActive ? 'active' : '')}>
             <span className="dot" /> Catálogo drogas
           </NavLink>
+          <NavLink to="/patologias" className={({ isActive }) => (isActive ? 'active' : '')}>
+            <span className="dot" /> Patologías
+          </NavLink>
         </nav>
       </aside>
       <main className="main">

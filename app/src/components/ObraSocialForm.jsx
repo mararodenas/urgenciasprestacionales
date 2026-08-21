@@ -2,11 +2,16 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from '../lib/useToast.jsx';
+import { useConfirm } from '../lib/useConfirm.jsx';
 
 const empty = {
   tipo: 'Obra Social',
   nombre: '',
+  nombre_comercial: '',
   rnas: '',
+  rnemp: '',
+  cuit: '',
+  activo: true,
   dg_nombre: '', dg_cargo: '', dg_telefono: '', dg_movil: '', dg_email: '', dg_notas: '',
   am_nombre: '', am_cargo: '', am_telefono: '', am_movil: '', am_email: '', am_notas: '',
   ad_nombre: '', ad_cargo: '', ad_telefono: '', ad_movil: '', ad_email: '', ad_notas: '',
@@ -18,6 +23,7 @@ export default function ObraSocialForm() {
   const isNew = !id;
   const navigate = useNavigate();
   const { showToast, ToastEl } = useToast();
+  const { confirmAction, ConfirmEl } = useConfirm();
   const [form, setForm] = useState(empty);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
@@ -53,7 +59,8 @@ export default function ObraSocialForm() {
   }
 
   async function handleDelete() {
-    if (!confirm('¿Eliminar esta entidad? Esta acción no se puede deshacer.')) return;
+    const ok = await confirmAction('Esta acción no se puede deshacer.', { title: `Eliminar "${form.nombre}"` });
+    if (!ok) return;
     const { error } = await supabase.from('obras_sociales').delete().eq('id', id);
     if (error) { showToast('No se pudo eliminar: ' + error.message); return; }
     navigate('/obras-sociales');
@@ -90,6 +97,10 @@ export default function ObraSocialForm() {
             <label>Nombre</label>
             <input value={form.nombre} onChange={(e) => set('nombre', e.target.value)} />
           </div>
+          <div className="field span-2">
+            <label>Nombre comercial</label>
+            <input value={form.nombre_comercial ?? ''} onChange={(e) => set('nombre_comercial', e.target.value)} />
+          </div>
           <div className="field">
             <label>Tipo</label>
             <select value={form.tipo} onChange={(e) => set('tipo', e.target.value)}>
@@ -97,9 +108,27 @@ export default function ObraSocialForm() {
               <option>Empresa de Medicina Prepaga</option>
             </select>
           </div>
+          {form.tipo === 'Obra Social' ? (
+            <div className="field">
+              <label>RNAS</label>
+              <input value={form.rnas ?? ''} onChange={(e) => set('rnas', e.target.value)} />
+            </div>
+          ) : (
+            <div className="field">
+              <label>RNEMP</label>
+              <input value={form.rnemp ?? ''} onChange={(e) => set('rnemp', e.target.value)} />
+            </div>
+          )}
           <div className="field">
-            <label>RNAS / RNEMP</label>
-            <input value={form.rnas ?? ''} onChange={(e) => set('rnas', e.target.value)} />
+            <label>CUIT</label>
+            <input value={form.cuit ?? ''} onChange={(e) => set('cuit', e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Estado</label>
+            <select value={form.activo ? 'activa' : 'baja'} onChange={(e) => set('activo', e.target.value === 'activa')}>
+              <option value="activa">Activa</option>
+              <option value="baja">De baja</option>
+            </select>
           </div>
         </div>
 
@@ -141,6 +170,7 @@ export default function ObraSocialForm() {
         </div>
       </div>
       {ToastEl}
+      {ConfirmEl}
     </>
   );
 }

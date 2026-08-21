@@ -1,29 +1,25 @@
-// Textos fijos de la plantilla IFSOL / IFDER.
-// Son un punto de partida editable: ajustá el marco legal y el encabezado
-// a la redacción oficial que use GCP antes de emitir informes reales.
+// Textos fijos del informe (iguales en todos los casos, sin importar la
+// plantilla elegida) — tomados del modelo real de IFSOL/IFDER.
 
-export const ENCABEZADO = (numeroEE) =>
-  `SUPERINTENDENCIA DE SERVICIOS DE SALUD\nGerencia de Control Prestacional\nExpediente N° ${numeroEE}`;
+export const REFERENCIA = (tipo, numeroEE) => `Referencia: ${tipo} ${numeroEE}`;
 
-export const MARCO_LEGAL =
-  'En el marco de lo dispuesto por la Ley N.° 23.661, la Ley N.° 24.901 y la ' +
-  'normativa complementaria vigente en materia de cobertura de urgencias ' +
-  'prestacionales, esta Gerencia de Control Prestacional procedió a la ' +
-  'evaluación del presente reclamo.';
+export const TRASLADO_FIJO =
+  'Se confiere traslado a la entidad denunciada para que, dentro del plazo de CINCO (5) ' +
+  'días hábiles contados a partir de la presente notificación, formule las consideraciones ' +
+  'que estime pertinentes, las que deberán ser presentadas de manera clara, completa y ' +
+  'debidamente documentada.';
 
 export const CIERRE = {
   IFSOL:
-    'En virtud de lo expuesto, y de las gestiones realizadas por esta Gerencia, ' +
-    'se deja constancia de que la presente denuncia ha podido resolverse en ' +
-    'forma favorable, habiéndose podido resolver en forma favorable la denuncia, ' +
-    'garantizándose al afiliado el acceso a la prestación requerida.',
+    'Habiendo transcurrido el tiempo establecido en el marco regulatorio y habiéndose podido ' +
+    'resolver en forma favorable la denuncia, se giran en devolución a esa área a efectos de ' +
+    'la continuidad del trámite conforme se estime corresponder en cuanto a sanciones, multas ' +
+    'e intimación al Agente del Seguro de salud con los fines de dar cumplimiento a la ' +
+    'cobertura prestacional.',
   IFDER:
-    'En virtud de lo expuesto, y no habiéndose podido resolver en forma ' +
-    'favorable la denuncia por la vía de gestión informal, se dispone la ' +
-    'derivación de las presentes actuaciones a los fines que correspondan.',
-};
-
-export const TITULO_INFORME = {
-  IFSOL: 'INFORME DE RESOLUCIÓN (IFSOL)',
-  IFDER: 'INFORME DE DERIVACIÓN (IFDER)',
+    'Habiendo transcurrido el tiempo establecido en el marco regulatorio y no habiéndose ' +
+    'podido resolver en forma favorable la denuncia, se giran en devolución a esa área a ' +
+    'efectos de la continuidad del trámite conforme se estime corresponder en cuanto a ' +
+    'sanciones, multas e intimación al Agente del Seguro de salud con los fines de dar ' +
+    'cumplimiento a la cobertura prestacional.',
 };

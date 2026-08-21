@@ -1,14 +1,16 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import ExpedientesList from './components/ExpedientesList';
 import ExpedienteForm from './components/ExpedienteForm';
 import ObrasSocialesList from './components/ObrasSocialesList';
 import ObraSocialForm from './components/ObraSocialForm';
 import CatalogoDrogas from './components/CatalogoDrogas';
+import PatologiasList from './components/PatologiasList';
+import PatologiaForm from './components/PatologiaForm';
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<ExpedientesList />} />
@@ -18,8 +20,11 @@ export default function App() {
           <Route path="/obras-sociales/nueva" element={<ObraSocialForm />} />
           <Route path="/obras-sociales/:id" element={<ObraSocialForm />} />
           <Route path="/catalogo" element={<CatalogoDrogas />} />
+          <Route path="/patologias" element={<PatologiasList />} />
+          <Route path="/patologias/nueva" element={<PatologiaForm />} />
+          <Route path="/patologias/:id" element={<PatologiaForm />} />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
