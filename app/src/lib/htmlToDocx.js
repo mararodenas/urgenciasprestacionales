@@ -59,7 +59,7 @@ function parseInlineNode(node, marks = {}) {
   }
   if (node.nodeType !== 1) return [];
   const tag = node.tagName.toLowerCase();
-  if (tag === 'ul' || tag === 'ol' || tag === 'img') return []; // se procesan aparte
+  if (tag === 'ul' || tag === 'ol' || tag === 'img') return []; // se procesan aparte, no como texto inline
   const newMarks = { ...marks };
   if (tag === 'b' || tag === 'strong') newMarks.bold = true;
   if (tag === 'i' || tag === 'em') newMarks.italic = true;
@@ -85,10 +85,16 @@ function inlineOfLi(li) {
 function walkList(listNode, level, paragraphs) {
   const tag = listNode.tagName.toLowerCase();
   let counter = 0;
-  Array.from(listNode.children).forEach((li) => {
-    if (li.tagName !== 'LI') return;
+  Array.from(listNode.children).forEach((child) => {
+    // El navegador a veces deja la sub-lista como hermana de los <li> en vez
+    // de anidada adentro de uno (ej: <ol><li>..</li><ul>..</ul><li>..</li></ol>).
+    if (child.tagName === 'UL' || child.tagName === 'OL') {
+      walkList(child, level + 1, paragraphs);
+      return;
+    }
+    if (child.tagName !== 'LI') return;
     counter += 1;
-    const runs = inlineOfLi(li);
+    const runs = inlineOfLi(child);
     if (tag === 'ol') {
       paragraphs.push(new Paragraph({
         spacing: { after: 60 },
@@ -98,14 +104,72 @@ function walkList(listNode, level, paragraphs) {
     } else {
       paragraphs.push(new Paragraph({ bullet: { level }, spacing: { after: 60 }, children: runs.length ? runs : [new TextRun('')] }));
     }
-    Array.from(li.children).forEach((child) => {
-      if (child.tagName === 'UL' || child.tagName === 'OL') walkList(child, level + 1, paragraphs);
+    // caso normal: sub-lista anidada adentro del <li>
+    Array.from(child.children).forEach((sub) => {
+      if (sub.tagName === 'UL' || sub.tagName === 'OL') walkList(sub, level + 1, paragraphs);
     });
   });
 }
 
+// Recorre CUALQUIER nodo (a cualquier profundidad) buscando bloques —
+// listas, imágenes, párrafos/divs — sin asumir que están a un nivel fijo,
+// que es justo lo que rompía antes (listas/imágenes anidadas se perdían).
+async function walkNode(node, paragraphs) {
+  if (node.nodeType === 3) {
+    if (node.textContent.trim()) {
+      paragraphs.push(new Paragraph({ spacing: { after: 120 }, children: [new TextRun(node.textContent)] }));
+    }
+    return;
+  }
+  if (node.nodeType !== 1) return;
+  const tag = node.tagName.toLowerCase();
+
+  if (tag === 'ul' || tag === 'ol') {
+    walkList(node, 0, paragraphs);
+    return;
+  }
+  if (tag === 'img') {
+    const p = await imagenAParagraph(node);
+    if (p) paragraphs.push(p);
+    return;
+  }
+  if (tag === 'br') return;
+
+  if (tag === 'p' || tag === 'div') {
+    // Procesa los hijos en orden, agrupando texto/inline consecutivo en un
+    // mismo párrafo y sacando aparte cualquier lista o imagen que aparezca
+    // en el medio (esté anidada donde esté).
+    let buffer = [];
+    const flush = () => {
+      if (buffer.length) {
+        paragraphs.push(new Paragraph({ spacing: { after: 120 }, children: buffer }));
+        buffer = [];
+      }
+    };
+    for (const child of Array.from(node.childNodes)) {
+      const childTag = child.nodeType === 1 ? child.tagName.toUpperCase() : null;
+      if (childTag === 'UL' || childTag === 'OL' || childTag === 'IMG') {
+        flush();
+        await walkNode(child, paragraphs);
+      } else if (childTag === 'P' || childTag === 'DIV') {
+        flush();
+        await walkNode(child, paragraphs);
+      } else {
+        buffer = buffer.concat(parseInlineNode(child));
+      }
+    }
+    flush();
+    return;
+  }
+
+  // cualquier otro tag inline suelto a nivel de bloque (span, etc.)
+  const runs = parseInlineNode(node);
+  if (runs.length) paragraphs.push(new Paragraph({ spacing: { after: 120 }, children: runs }));
+}
+
 // Convierte el HTML simple que genera RichTextEditor (p, b/strong, i/em, u,
-// font[size], ul/ol/li anidables, img, br) en un array de Paragraph de docx.
+// font[size], ul/ol/li anidables a cualquier profundidad, img, br) en un
+// array de Paragraph de docx.
 export async function htmlToDocxParagraphs(html, opts = {}) {
   if (!html || !html.replace(/<[^>]+>/g, '').trim()) {
     return [new Paragraph({ children: [new TextRun(opts.emptyText || '(sin contenido cargado)')] })];
@@ -114,46 +178,25 @@ export async function htmlToDocxParagraphs(html, opts = {}) {
   container.innerHTML = html;
   const paragraphs = [];
 
-  async function walkBlock(node) {
-    const tag = node.tagName?.toLowerCase();
-    if (tag === 'ul' || tag === 'ol') {
-      walkList(node, 0, paragraphs);
-      return;
-    }
-    if (tag === 'img') {
-      const p = await imagenAParagraph(node);
-      if (p) paragraphs.push(p);
-      return;
-    }
-    if (tag === 'p' || tag === 'div') {
-      // una imagen adentro de un <p>/<div> se procesa como su propio párrafo
-      const imgsHijas = Array.from(node.children).filter((c) => c.tagName === 'IMG');
-      for (const img of imgsHijas) {
-        const p = await imagenAParagraph(img);
-        if (p) paragraphs.push(p);
-      }
-      const runs = parseInlineNode(node);
-      if (runs.length) paragraphs.push(new Paragraph({ spacing: { after: 120 }, children: runs }));
-      else if (!imgsHijas.length) paragraphs.push(new Paragraph({ spacing: { after: 120 }, children: [new TextRun('')] }));
-      return;
-    }
-    const runs = parseInlineNode(node);
-    if (runs.length) paragraphs.push(new Paragraph({ spacing: { after: 120 }, children: runs }));
-  }
-
   for (const node of Array.from(container.childNodes)) {
-    if (node.nodeType === 1) {
-      await walkBlock(node);
-    } else if (node.nodeType === 3 && node.textContent.trim()) {
-      paragraphs.push(new Paragraph({ spacing: { after: 120 }, children: [new TextRun(node.textContent)] }));
-    }
+    await walkNode(node, paragraphs);
   }
 
   return paragraphs.length ? paragraphs : [new Paragraph({ children: [new TextRun('')] })];
 }
 
+// Divide un texto por comillas dobles rectas ("...") y pone en itálica lo
+// que va entre ellas — para las citas legales textuales de las plantillas.
+function textoConCitasEnItalica(texto) {
+  const partes = texto.split('"');
+  return partes
+    .filter((s, i) => s !== '' || i % 2 === 1)
+    .map((seg, i) => new TextRun({ text: i % 2 === 1 ? `"${seg}"` : seg, italics: i % 2 === 1 }));
+}
+
 // Convierte texto plano con líneas en blanco como separador de párrafo
-// (para los bloques de plantilla, que son texto simple, no HTML).
+// (para los bloques de plantilla, que son texto simple, no HTML). El texto
+// entre comillas queda en itálica.
 export function plainTextToDocxParagraphs(text, opts = {}) {
   if (!text || !text.trim()) {
     return [new Paragraph({ children: [new TextRun(opts.emptyText || '')] })];
@@ -161,5 +204,5 @@ export function plainTextToDocxParagraphs(text, opts = {}) {
   return text
     .split(/\n\s*\n/)
     .filter((b) => b.trim())
-    .map((block) => new Paragraph({ spacing: { after: 160 }, children: [new TextRun(block.trim())] }));
+    .map((block) => new Paragraph({ spacing: { after: 160 }, children: textoConCitasEnItalica(block.trim()) }));
 }

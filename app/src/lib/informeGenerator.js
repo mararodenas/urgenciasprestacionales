@@ -74,6 +74,13 @@ export async function generarInformeDocx({
   const gestionParagraphs = await htmlToDocxParagraphs(gestionHtml, { emptyText: '(sin gestión cargada)' });
 
   const doc = new Document({
+    styles: {
+      default: {
+        document: {
+          run: { font: 'Calibri', size: 20 }, // 20 half-points = 10pt
+        },
+      },
+    },
     sections: [
       {
         properties: {},
