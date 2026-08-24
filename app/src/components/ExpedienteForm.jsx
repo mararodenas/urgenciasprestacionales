@@ -353,6 +353,17 @@ export default function ExpedienteForm() {
     await subirAdjunto(nombreado);
   }
 
+  async function handleEliminarAdjunto(adjunto) {
+    const ok = await confirmAction('Esta acción no se puede deshacer.', { title: `Eliminar "${adjunto.nombre_archivo}"` });
+    if (!ok) return;
+    const path = adjunto.archivo_url.split('/adjuntos/')[1];
+    if (path) await supabase.storage.from('adjuntos').remove([path]);
+    const { error } = await supabase.from('expediente_adjuntos').delete().eq('id', adjunto.id);
+    if (error) { showToast('No se pudo eliminar: ' + error.message); return; }
+    setAdjuntos((prev) => prev.filter((a) => a.id !== adjunto.id));
+    showToast('Adjunto eliminado');
+  }
+
 
   async function handleGenerarInforme(tipo) {
     if (!id) { showToast('Guardá el expediente antes de generar el informe'); return; }
@@ -364,8 +375,9 @@ export default function ExpedienteForm() {
     const fundamentacionesHtml = drogasSeleccionadas.map((d) => d.fundamentacion);
 
     setGenerandoInforme(tipo);
+    let blob;
     try {
-      await generarInformeDocx({
+      blob = await generarInformeDocx({
         expediente: form,
         obraSocial,
         patologiaNombre: patologia?.nombre,
@@ -381,14 +393,32 @@ export default function ExpedienteForm() {
       setGenerandoInforme(null);
       return;
     }
-    setGenerandoInforme(null);
+
+    // subirlo a Storage para poder abrirlo después con un link
+    const path = `informes/${id}/${tipo}_${Date.now()}.docx`;
+    const { error: upErr } = await supabase.storage.from('adjuntos').upload(path, blob, {
+      contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    });
+    let archivoUrl = null;
+    if (!upErr) {
+      archivoUrl = supabase.storage.from('adjuntos').getPublicUrl(path).data.publicUrl;
+    }
+
+    // se queda solo con el último de este tipo: borra los anteriores
+    const anteriores = informesGenerados.filter((i) => i.tipo === tipo);
+    if (anteriores.length) {
+      await supabase.from('informes').delete().in('id', anteriores.map((i) => i.id));
+    }
 
     const { data, error } = await supabase
       .from('informes')
-      .insert({ expediente_id: id, tipo })
+      .insert({ expediente_id: id, tipo, archivo_url: archivoUrl })
       .select()
       .single();
-    if (!error) setInformesGenerados((prev) => [data, ...prev]);
+    setGenerandoInforme(null);
+    if (!error) {
+      setInformesGenerados((prev) => [...prev.filter((i) => i.tipo !== tipo), data]);
+    }
     showToast(`Informe ${tipo} generado`);
   }
 
@@ -658,6 +688,7 @@ export default function ExpedienteForm() {
                 <div className="attach-item" key={a.id}>
                   {a.archivo_url.match(/\.(png|jpe?g|webp)$/i) && <img src={a.archivo_url} alt="" />}
                   <a href={a.archivo_url} target="_blank" rel="noreferrer">{a.nombre_archivo}</a>
+                  <button className="attach-delete" title="Eliminar adjunto" onClick={() => handleEliminarAdjunto(a)}>✕</button>
                 </div>
               ))}
             </div>
@@ -669,26 +700,37 @@ export default function ExpedienteForm() {
         <div className="section-title">Dictamen</div>
         {!isNew ? (
           <>
-            <div className="field span-2" style={{ marginBottom: 14 }}>
-              <label>Plantilla del informe <span className="hint">(texto normativo según el tipo de caso)</span></label>
-              <select value={form.plantilla_id ?? ''} onChange={(e) => setField('plantilla_id', e.target.value || null)}>
-                <option value="">Sin plantilla</option>
-                {plantillas.map((p) => (
-                  <option key={p.id} value={p.id}>{p.nombre}</option>
-                ))}
-              </select>
-            </div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-              <button className="btn btn-secondary" onClick={() => handleGenerarInforme('IFSOL')} disabled={!!generandoInforme}>
+            <div className="dictamen-bar">
+              <div className="field" style={{ flex: 1, minWidth: 220 }}>
+                <label>Plantilla del informe</label>
+                <select value={form.plantilla_id ?? ''} onChange={(e) => setField('plantilla_id', e.target.value || null)}>
+                  <option value="">Sin plantilla</option>
+                  {plantillas.map((p) => (
+                    <option key={p.id} value={p.id}>{p.nombre}</option>
+                  ))}
+                </select>
+              </div>
+              <button className="btn btn-primary" onClick={() => handleGenerarInforme('IFSOL')} disabled={!!generandoInforme}>
                 {generandoInforme === 'IFSOL' ? 'Generando...' : 'Generar IFSOL (.docx)'}
               </button>
-              <button className="btn btn-secondary" onClick={() => handleGenerarInforme('IFDER')} disabled={!!generandoInforme}>
+              <button className="btn btn-primary" onClick={() => handleGenerarInforme('IFDER')} disabled={!!generandoInforme}>
                 {generandoInforme === 'IFDER' ? 'Generando...' : 'Generar IFDER (.docx)'}
               </button>
             </div>
             {informesGenerados.length > 0 && (
-              <p className="hint">
-                Generados: {informesGenerados.map((i) => `${i.tipo} (${new Date(i.created_at).toLocaleDateString('es-AR')})`).join(', ')}
+              <p className="hint" style={{ marginTop: 12 }}>
+                Último generado: {informesGenerados.map((i) => (
+                  <span key={i.id}>
+                    {i.archivo_url ? (
+                      <a href={i.archivo_url} target="_blank" rel="noreferrer">
+                        {i.tipo} ({new Date(i.created_at).toLocaleDateString('es-AR')})
+                      </a>
+                    ) : (
+                      `${i.tipo} (${new Date(i.created_at).toLocaleDateString('es-AR')})`
+                    )}
+                    {' '}
+                  </span>
+                ))}
               </p>
             )}
           </>

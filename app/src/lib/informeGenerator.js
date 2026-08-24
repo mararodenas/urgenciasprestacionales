@@ -115,4 +115,5 @@ export async function generarInformeDocx({
 
   const blob = await Packer.toBlob(doc);
   saveAs(blob, `${tipo}_${expediente.numero_ee}.docx`);
+  return blob;
 }
