@@ -26,7 +26,7 @@ export default function HelpTip({ title, children }) {
       </button>
       {open && (
         <div className="help-tip-popover" onClick={(e) => e.stopPropagation()}>
-          {title && <strong>{title}</strong>}
+          {title && <div className="help-tip-title">{title}</div>}
           <div>{children}</div>
         </div>
       )}
