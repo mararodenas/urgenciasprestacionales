@@ -311,8 +311,7 @@ export default function ExpedienteForm() {
     if (isNew) navigate(`/expedientes/${expedienteId}`);
   }
 
-  async function handleUploadAdjunto(e) {
-    const file = e.target.files[0];
+  async function subirAdjunto(file) {
     if (!file || !id) {
       if (!id) showToast('Guardá el expediente antes de adjuntar archivos');
       return;
@@ -333,8 +332,27 @@ export default function ExpedienteForm() {
       .single();
     if (!error) setAdjuntos((prev) => [...prev, data]);
     setUploading(false);
+  }
+
+  async function handleUploadAdjunto(e) {
+    const file = e.target.files[0];
+    await subirAdjunto(file);
     e.target.value = '';
   }
+
+  async function handlePasteAdjunto(e) {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const imagen = Array.from(items).find((it) => it.type.startsWith('image/'));
+    if (!imagen) return;
+    e.preventDefault();
+    const file = imagen.getAsFile();
+    if (!file) return;
+    const extension = file.type.split('/')[1] || 'png';
+    const nombreado = new File([file], `captura_${Date.now()}.${extension}`, { type: file.type });
+    await subirAdjunto(nombreado);
+  }
+
 
   async function handleGenerarInforme(tipo) {
     if (!id) { showToast('Guardá el expediente antes de generar el informe'); return; }
@@ -620,6 +638,13 @@ export default function ExpedienteForm() {
               Adjuntos (evidencia)
             </label>
             <input type="file" onChange={handleUploadAdjunto} disabled={uploading} accept="image/*,.pdf" />
+            <div
+              className="paste-zone"
+              tabIndex={0}
+              onPaste={handlePasteAdjunto}
+            >
+              {uploading ? 'Subiendo...' : 'O hacé clic acá y pegá una captura con Ctrl+V'}
+            </div>
             <div className="attach-list">
               {adjuntos.map((a) => (
                 <div className="attach-item" key={a.id}>
