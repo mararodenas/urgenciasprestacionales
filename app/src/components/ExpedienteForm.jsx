@@ -255,6 +255,17 @@ export default function ExpedienteForm() {
     navigate('/');
   }
 
+  async function handleUsarDatosAfiliado() {
+    if (form.denunciante_nombre?.trim() || form.denunciante_dni_cuit?.trim()) {
+      const ok = await confirmAction(
+        'Ya hay datos cargados en Denunciante y se van a reemplazar por los del afiliado. Esta acción no se puede deshacer.',
+        { title: 'Usar los datos del afiliado', confirmLabel: 'Sí, reemplazar' }
+      );
+      if (!ok) return;
+    }
+    setForm((f) => ({ ...f, denunciante_nombre: f.nombre_paciente, denunciante_dni_cuit: f.dni_cuit_paciente }));
+  }
+
   async function handleSave() {
     if (!form.numero_ee || !form.fecha_ingreso || !form.nombre_paciente || !form.diagnostico_detalle) {
       showToast('Completá N° EE, fecha de ingreso, afiliado y diagnóstico');
@@ -510,7 +521,7 @@ export default function ExpedienteForm() {
             type="button"
             className="btn btn-ghost"
             style={{ fontSize: 12 }}
-            onClick={() => setForm((f) => ({ ...f, denunciante_nombre: f.nombre_paciente, denunciante_dni_cuit: f.dni_cuit_paciente }))}
+            onClick={handleUsarDatosAfiliado}
           >
             Usar los datos del afiliado
           </button>

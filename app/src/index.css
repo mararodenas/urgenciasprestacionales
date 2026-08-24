@@ -389,7 +389,8 @@ a { color: var(--teal); text-decoration: none; }
   padding: 10px 24px;
 }
 .section-title:first-child { margin-top: -22px; border-radius: 10px 10px 0 0; }
-.section-title a, .section-title .hint { color: #fff !important; opacity: 0.85; }
+.section-title a, .section-title .hint, .section-title button { color: #fff !important; opacity: 0.9; }
+.section-title button:hover { opacity: 1; text-decoration: underline; }
 
 /* ---------- Misc ---------- */
 

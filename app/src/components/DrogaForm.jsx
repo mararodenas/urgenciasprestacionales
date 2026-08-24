@@ -19,6 +19,7 @@ export default function DrogaForm() {
   const [nuevaMarca, setNuevaMarca] = useState({ nombre_comercial: '', numero_anmat: '', laboratorio: '' });
   const [combos, setCombos] = useState([]);
   const [patologias, setPatologias] = useState([]);
+  const [comboAbierto, setComboAbierto] = useState(null);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
 
@@ -206,16 +207,29 @@ export default function DrogaForm() {
 
             <div className="section-title">Fundamentación por patología</div>
             {combos.length > 0 ? (
-              combos.map((c) => (
-                <div key={c.id} className="field" style={{ marginBottom: 16 }}>
-                  <label>{patologiaNombre(c.patologia_id)}</label>
-                  <RichTextEditor
-                    value={c.fundamentacion_texto}
-                    onChange={(html) => actualizarFundamentacion(c.id, html)}
-                    onBlurSave={() => guardarFundamentacion(c)}
-                  />
-                </div>
-              ))
+              combos.map((c) => {
+                const abierto = comboAbierto === c.id;
+                return (
+                  <div key={c.id} className="card" style={{ marginBottom: 10 }}>
+                    <div
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', cursor: 'pointer' }}
+                      onClick={() => setComboAbierto(abierto ? null : c.id)}
+                    >
+                      <strong>{patologiaNombre(c.patologia_id)}</strong>
+                      <span className="hint">{abierto ? 'Cerrar ▲' : 'Ver / editar ▾'}</span>
+                    </div>
+                    {abierto && (
+                      <div style={{ padding: '0 16px 16px' }}>
+                        <RichTextEditor
+                          value={c.fundamentacion_texto}
+                          onChange={(html) => actualizarFundamentacion(c.id, html)}
+                          onBlurSave={() => guardarFundamentacion(c)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             ) : (
               <p className="hint">
                 Todavía no se usó esta droga en ninguna patología. Se genera automáticamente la primera vez

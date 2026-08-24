@@ -16,6 +16,7 @@ export default function PatologiaForm() {
   const [nombre, setNombre] = useState('');
   const [combos, setCombos] = useState([]);
   const [drogas, setDrogas] = useState([]);
+  const [comboAbierto, setComboAbierto] = useState(null);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
 
@@ -138,22 +139,33 @@ export default function PatologiaForm() {
                 Buscar en el Vademecum ↗
               </a>
             </div>
-            {combos.map((c) => (
-              <div key={c.id} className="card" style={{ marginBottom: 10, padding: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <strong>{nombreDroga(c.droga_id)}</strong>
-                  <button className="btn btn-ghost btn-danger" onClick={() => desasociarDroga(c.id)}>Quitar</button>
+            {combos.map((c) => {
+              const abierto = comboAbierto === c.id;
+              return (
+                <div key={c.id} className="card" style={{ marginBottom: 10 }}>
+                  <div
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', cursor: 'pointer' }}
+                    onClick={() => setComboAbierto(abierto ? null : c.id)}
+                  >
+                    <strong>{nombreDroga(c.droga_id)}</strong>
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                      <span className="hint">{abierto ? 'Cerrar ▲' : 'Ver / editar ▾'}</span>
+                      <button className="btn btn-ghost btn-danger" onClick={(e) => { e.stopPropagation(); desasociarDroga(c.id); }}>Quitar</button>
+                    </div>
+                  </div>
+                  {abierto && (
+                    <div className="field" style={{ padding: '0 16px 16px' }}>
+                      <label>Indicaciones médicas / mecanismo de acción</label>
+                      <RichTextEditor
+                        value={c.fundamentacion_texto}
+                        onChange={(html) => actualizarFundamentacion(c.id, html)}
+                        onBlurSave={() => guardarFundamentacion(c)}
+                      />
+                    </div>
+                  )}
                 </div>
-                <div className="field">
-                  <label>Indicaciones médicas / mecanismo de acción</label>
-                  <RichTextEditor
-                    value={c.fundamentacion_texto}
-                    onChange={(html) => actualizarFundamentacion(c.id, html)}
-                    onBlurSave={() => guardarFundamentacion(c)}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
             <div className="field">
               <label>Asociar droga</label>
               <SearchSelect
