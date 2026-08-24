@@ -261,6 +261,7 @@ a { color: var(--teal); text-decoration: none; }
   transition: background 0.1s ease;
 }
 
+.registry tbody tr:nth-child(even) { background: var(--paper); }
 .registry tbody tr:hover { background: var(--teal-tint); }
 
 .registry tbody tr:not(:last-child) td { border-bottom: 1px solid var(--line-soft); }

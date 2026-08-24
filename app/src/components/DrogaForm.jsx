@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from '../lib/useToast.jsx';
@@ -228,29 +228,32 @@ export default function DrogaForm() {
               </HelpTip>
             </div>
             {combos.length > 0 ? (
-              combos.map((c) => {
-                const abierto = comboAbierto === c.id;
-                return (
-                  <div key={c.id} className="card" style={{ marginBottom: 10 }}>
-                    <div
-                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', cursor: 'pointer' }}
-                      onClick={() => setComboAbierto(abierto ? null : c.id)}
-                    >
-                      <strong>{patologiaNombre(c.patologia_id)}</strong>
-                      <span className="hint">{abierto ? 'Cerrar ▲' : 'Ver / editar ▾'}</span>
-                    </div>
-                    {abierto && (
-                      <div style={{ padding: '0 16px 16px' }}>
-                        <RichTextEditor
-                          value={c.fundamentacion_texto}
-                          onChange={(html) => actualizarFundamentacion(c.id, html)}
-                          onBlurSave={() => guardarFundamentacion(c)}
-                        />
-                      </div>
-                    )}
-                  </div>
-                );
-              })
+              <table className="registry" style={{ marginBottom: 10 }}>
+                <tbody>
+                  {combos.map((c) => {
+                    const abierto = comboAbierto === c.id;
+                    return (
+                      <Fragment key={c.id}>
+                        <tr onClick={() => setComboAbierto(abierto ? null : c.id)}>
+                          <td><strong>{patologiaNombre(c.patologia_id)}</strong></td>
+                          <td style={{ textAlign: 'right', color: 'var(--ink-muted)' }}>{abierto ? 'Cerrar ▲' : 'Ver / editar ▾'}</td>
+                        </tr>
+                        {abierto && (
+                          <tr style={{ cursor: 'default' }}>
+                            <td colSpan={2} style={{ padding: '0 16px 16px' }}>
+                              <RichTextEditor
+                                value={c.fundamentacion_texto}
+                                onChange={(html) => actualizarFundamentacion(c.id, html)}
+                                onBlurSave={() => guardarFundamentacion(c)}
+                              />
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
             ) : (
               <p className="hint">
                 Todavía no se usó esta droga en ninguna patología. Se genera automáticamente la primera vez

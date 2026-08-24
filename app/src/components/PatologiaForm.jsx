@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from '../lib/useToast.jsx';
@@ -153,33 +153,40 @@ export default function PatologiaForm() {
                 Buscar en el Vademecum ↗
               </a>
             </div>
-            {combos.map((c) => {
-              const abierto = comboAbierto === c.id;
-              return (
-                <div key={c.id} className="card" style={{ marginBottom: 10 }}>
-                  <div
-                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', cursor: 'pointer' }}
-                    onClick={() => setComboAbierto(abierto ? null : c.id)}
-                  >
-                    <strong>{nombreDroga(c.droga_id)}</strong>
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                      <span className="hint">{abierto ? 'Cerrar ▲' : 'Ver / editar ▾'}</span>
-                      <button className="btn btn-ghost btn-danger" onClick={(e) => { e.stopPropagation(); desasociarDroga(c.id); }}>Quitar</button>
-                    </div>
-                  </div>
-                  {abierto && (
-                    <div className="field" style={{ padding: '0 16px 16px' }}>
-                      <label>Indicaciones médicas / mecanismo de acción</label>
-                      <RichTextEditor
-                        value={c.fundamentacion_texto}
-                        onChange={(html) => actualizarFundamentacion(c.id, html)}
-                        onBlurSave={() => guardarFundamentacion(c)}
-                      />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {combos.length > 0 && (
+              <table className="registry" style={{ marginBottom: 10 }}>
+                <tbody>
+                  {combos.map((c) => {
+                    const abierto = comboAbierto === c.id;
+                    return (
+                      <Fragment key={c.id}>
+                        <tr onClick={() => setComboAbierto(abierto ? null : c.id)}>
+                          <td><strong>{nombreDroga(c.droga_id)}</strong></td>
+                          <td style={{ textAlign: 'right' }}>
+                            <span className="hint" style={{ marginRight: 14 }}>{abierto ? 'Cerrar ▲' : 'Ver / editar ▾'}</span>
+                            <button className="btn btn-ghost btn-danger" onClick={(e) => { e.stopPropagation(); desasociarDroga(c.id); }}>Quitar</button>
+                          </td>
+                        </tr>
+                        {abierto && (
+                          <tr style={{ cursor: 'default' }}>
+                            <td colSpan={2} style={{ padding: '0 16px 16px' }}>
+                              <div className="field">
+                                <label>Indicaciones médicas / mecanismo de acción</label>
+                                <RichTextEditor
+                                  value={c.fundamentacion_texto}
+                                  onChange={(html) => actualizarFundamentacion(c.id, html)}
+                                  onBlurSave={() => guardarFundamentacion(c)}
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
             <div className="field">
               <label>Asociar droga</label>
               <SearchSelect
