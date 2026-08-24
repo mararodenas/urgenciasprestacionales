@@ -637,13 +637,21 @@ export default function ExpedienteForm() {
             <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-muted)', display: 'block', marginBottom: 6 }}>
               Adjuntos (evidencia)
             </label>
-            <input type="file" onChange={handleUploadAdjunto} disabled={uploading} accept="image/*,.pdf" />
-            <div
-              className="paste-zone"
-              tabIndex={0}
-              onPaste={handlePasteAdjunto}
-            >
-              {uploading ? 'Subiendo...' : 'O hacé clic acá y pegá una captura con Ctrl+V'}
+            <div className="form-grid" style={{ marginBottom: 10 }}>
+              <div className="field span-2">
+                <label>Adjuntar archivo</label>
+                <input type="file" onChange={handleUploadAdjunto} disabled={uploading} accept="image/*,.pdf" />
+              </div>
+              <div className="field span-2">
+                <label>Pegar imagen</label>
+                <div
+                  className="paste-zone"
+                  tabIndex={0}
+                  onPaste={handlePasteAdjunto}
+                >
+                  {uploading ? 'Subiendo...' : 'Hacé clic acá y pegá con Ctrl+V'}
+                </div>
+              </div>
             </div>
             <div className="attach-list">
               {adjuntos.map((a) => (
