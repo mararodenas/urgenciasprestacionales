@@ -4,7 +4,8 @@ import ExpedientesList from './components/ExpedientesList';
 import ExpedienteForm from './components/ExpedienteForm';
 import ObrasSocialesList from './components/ObrasSocialesList';
 import ObraSocialForm from './components/ObraSocialForm';
-import CatalogoDrogas from './components/CatalogoDrogas';
+import DrogasList from './components/DrogasList';
+import DrogaForm from './components/DrogaForm';
 import PatologiasList from './components/PatologiasList';
 import PatologiaForm from './components/PatologiaForm';
 import PlantillasList from './components/PlantillasList';
@@ -21,7 +22,9 @@ export default function App() {
           <Route path="/obras-sociales" element={<ObrasSocialesList />} />
           <Route path="/obras-sociales/nueva" element={<ObraSocialForm />} />
           <Route path="/obras-sociales/:id" element={<ObraSocialForm />} />
-          <Route path="/catalogo" element={<CatalogoDrogas />} />
+          <Route path="/catalogo" element={<DrogasList />} />
+          <Route path="/catalogo/nueva" element={<DrogaForm />} />
+          <Route path="/catalogo/:id" element={<DrogaForm />} />
           <Route path="/patologias" element={<PatologiasList />} />
           <Route path="/patologias/nueva" element={<PatologiaForm />} />
           <Route path="/patologias/:id" element={<PatologiaForm />} />
