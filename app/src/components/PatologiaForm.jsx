@@ -155,6 +155,9 @@ export default function PatologiaForm() {
             </div>
             {combos.length > 0 && (
               <table className="registry" style={{ marginBottom: 10 }}>
+                <thead>
+                  <tr><th>Droga</th><th></th></tr>
+                </thead>
                 <tbody>
                   {combos.map((c) => {
                     const abierto = comboAbierto === c.id;
