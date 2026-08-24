@@ -5,6 +5,7 @@ import SearchSelect from './SearchSelect';
 import ObraSocialModal from './ObraSocialModal';
 import ObraSocialCodeSelector from './ObraSocialCodeSelector';
 import RichTextEditor from './RichTextEditor';
+import HelpTip from './HelpTip';
 import { useToast } from '../lib/useToast.jsx';
 import { useConfirm } from '../lib/useConfirm.jsx';
 import { generarInformeDocx } from '../lib/informeGenerator';
@@ -537,7 +538,14 @@ export default function ExpedienteForm() {
           </div>
         </div>
 
-        <div className="section-title">Solicitud</div>
+        <div className="section-title">Solicitud
+          <HelpTip title="Solicitud">
+            Acá cargás qué pide el caso: la <strong>Patología</strong> (determina qué drogas te sugiere el sistema),
+            el <strong>Diagnóstico</strong> del médico tratante (va textual en el informe), el <strong>Motivo de la denuncia</strong>
+            (va en negrita en el encabezado del IFSOL/IFDER) y opcionalmente un <strong>Resumen de historia clínica</strong>.
+            Debajo elegís la o las drogas involucradas.
+          </HelpTip>
+        </div>
         <div className="form-grid">
           <div className="field span-2">
             <label>Patología</label>
@@ -600,7 +608,15 @@ export default function ExpedienteForm() {
 
         {drogasSeleccionadas.length > 0 && (
           <>
-            <div className="section-title">Explicación de la droga</div>
+            <div className="section-title">Explicación de la droga
+              <HelpTip title="Explicación de la droga">
+                Por cada droga elegida: la <strong>Marca comercial</strong> usada (trae su propio N° de Certificado ANMAT),
+                el <strong>Código ATC</strong> y <strong>Descripción ANMAT</strong> (datos generales de la droga, se editan
+                acá o desde Catálogo drogas), y las <strong>Indicaciones médicas / mecanismo de acción</strong> para esta
+                patología puntual — este último texto se autocompleta si ya se cargó antes esa combinación droga+patología,
+                y es el que va en el informe.
+              </HelpTip>
+            </div>
             {drogasSeleccionadas.map((d) => {
               const info = drogasCatalogo.find((c) => c.id === d.droga_id);
               const marcasDeEsta = marcasCatalogo.filter((m) => m.droga_id === d.droga_id);
@@ -663,7 +679,15 @@ export default function ExpedienteForm() {
           </>
         )}
 
-        <div className="section-title">Análisis</div>
+        <div className="section-title">Análisis
+          <HelpTip title="Análisis">
+            Acá va la <strong>Gestión realizada</strong>: el relato de las acciones que hizo GCP para resolver el caso
+            (fecha de notificación al Agente de Seguro, respuesta recibida, contacto con el denunciante, etc.). Este texto
+            va tal cual en el informe, justo antes del cierre. Podés pegar capturas de pantalla (Ctrl+V) directo adentro
+            del cuadro y quedan incrustadas en el Word. Debajo podés adjuntar archivos de evidencia aparte (no se incluyen
+            en el Word, quedan como respaldo).
+          </HelpTip>
+        </div>
         <div className="field span-4" style={{ marginBottom: 16 }}>
           <label>Gestión realizada <span className="hint">(acciones de GCP para la resolución del caso — va en el informe)</span></label>
           <RichTextEditor
@@ -708,7 +732,14 @@ export default function ExpedienteForm() {
           <p className="hint">Guardá el expediente para poder adjuntar archivos.</p>
         )}
 
-        <div className="section-title">Dictamen</div>
+        <div className="section-title">Dictamen
+          <HelpTip title="Dictamen">
+            Elegí la <strong>Plantilla</strong> según el tipo de caso (por ejemplo "Oncología") — trae el texto normativo
+            fijo que va antes y después del diagnóstico. Después generá el <strong>IFSOL</strong> (si la Obra Social
+            respondió/resolvió) o el <strong>IFDER</strong> (si no respondió) — se descarga el .docx y además queda un
+            link acá abajo para volver a abrirlo. Solo se guarda el último de cada tipo.
+          </HelpTip>
+        </div>
         {!isNew ? (
           <>
             <div className="dictamen-bar">

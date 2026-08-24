@@ -5,6 +5,7 @@ import { useToast } from '../lib/useToast.jsx';
 import { useConfirm } from '../lib/useConfirm.jsx';
 import SearchSelect from './SearchSelect';
 import RichTextEditor from './RichTextEditor';
+import HelpTip from './HelpTip';
 
 export default function PatologiaForm() {
   const { id } = useParams();
@@ -123,7 +124,13 @@ export default function PatologiaForm() {
       </div>
 
       <div className="card card-pad">
-        <div className="section-title" style={{ marginTop: 0 }}>Datos generales</div>
+        <div className="section-title" style={{ marginTop: 0 }}>Datos generales
+          <HelpTip title="Datos generales">
+            Solo el <strong>nombre</strong> de la patología. Se usa como opción en el desplegable "Patología" de cada
+            expediente, y agrupa las drogas/fundamentaciones asociadas de abajo. La descripción de cada caso puntual
+            se carga aparte, en el propio expediente (campo Diagnóstico).
+          </HelpTip>
+        </div>
         <div className="form-grid">
           <div className="field span-4">
             <label>Nombre</label>
@@ -134,7 +141,14 @@ export default function PatologiaForm() {
         {!isNew && (
           <>
             <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <span>Drogas asociadas <span className="hint">(hasta 6 por tratamiento habitual)</span></span>
+              <span>
+                Drogas asociadas <span className="hint">(hasta 6 por tratamiento habitual)</span>
+                <HelpTip title="Drogas asociadas">
+                  Las drogas que se usan habitualmente para tratar esta patología. Al elegir esta patología en un
+                  expediente, estas mismas drogas aparecen tildables para elegir rápido. Cada una tiene su propio
+                  texto de "Indicaciones médicas / mecanismo de acción" — es el que después va en el informe.
+                </HelpTip>
+              </span>
               <a href="https://servicios.pami.org.ar/vademecum/views/consultaPublica/listado.zul" target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 600 }}>
                 Buscar en el Vademecum ↗
               </a>

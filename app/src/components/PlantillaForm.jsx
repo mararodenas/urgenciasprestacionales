@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from '../lib/useToast.jsx';
 import { useConfirm } from '../lib/useConfirm.jsx';
+import HelpTip from './HelpTip';
 
 export default function PlantillaForm() {
   const { id } = useParams();
@@ -71,7 +72,12 @@ export default function PlantillaForm() {
       </div>
 
       <div className="card card-pad">
-        <div className="section-title" style={{ marginTop: 0 }}>Datos generales</div>
+        <div className="section-title" style={{ marginTop: 0 }}>Datos generales
+          <HelpTip title="Datos generales">
+            El nombre identifica la plantilla en el desplegable "Plantilla del informe" de cada expediente — elegí
+            un nombre claro por tipo de caso (ej: Oncología, Reumatología).
+          </HelpTip>
+        </div>
         <div className="form-grid">
           <div className="field span-4">
             <label>Nombre <span className="hint">(ej: Oncología)</span></label>
@@ -79,18 +85,25 @@ export default function PlantillaForm() {
           </div>
         </div>
 
-        <div className="section-title">Texto de apertura</div>
-        <p className="hint" style={{ marginTop: -4, marginBottom: 8 }}>
-          Va después del párrafo del denunciante/afiliado y antes del DIAGNÓSTICO. Separá párrafos dejando una línea en blanco.
-        </p>
+        <div className="section-title">Texto de apertura
+          <HelpTip title="Texto de apertura">
+            Va después del párrafo del denunciante/afiliado y antes de "DIAGNÓSTICO" — normalmente el marco legal y
+            normativo general aplicable a este tipo de caso (resoluciones, leyes, PMO). Separá párrafos dejando una
+            línea en blanco entre ellos. El texto entre comillas queda automáticamente en itálica en el Word (para
+            las citas textuales).
+          </HelpTip>
+        </div>
         <div className="field">
           <textarea style={{ minHeight: 260, fontFamily: 'inherit' }} value={apertura} onChange={(e) => setApertura(e.target.value)} />
         </div>
 
-        <div className="section-title">Texto de cierre técnico</div>
-        <p className="hint" style={{ marginTop: -4, marginBottom: 8 }}>
-          Va después de las Indicaciones Médicas de la droga y antes del traslado a la entidad denunciada.
-        </p>
+        <div className="section-title">Texto de cierre técnico
+          <HelpTip title="Texto de cierre técnico">
+            Va después de las "Indicaciones Médicas" de la droga y antes del traslado a la entidad denunciada —
+            normalmente la conclusión del área técnica confirmando que corresponde la cobertura. También separá
+            párrafos dejando una línea en blanco.
+          </HelpTip>
+        </div>
         <div className="field">
           <textarea style={{ minHeight: 140, fontFamily: 'inherit' }} value={cierre} onChange={(e) => setCierre(e.target.value)} />
         </div>

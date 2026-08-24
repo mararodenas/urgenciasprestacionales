@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useToast } from '../lib/useToast.jsx';
 import { useConfirm } from '../lib/useConfirm.jsx';
 import RichTextEditor from './RichTextEditor';
+import HelpTip from './HelpTip';
 
 export default function DrogaForm() {
   const { id } = useParams();
@@ -137,7 +138,14 @@ export default function DrogaForm() {
 
       <div className="card card-pad">
         <div className="section-title" style={{ marginTop: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <span>Datos generales</span>
+          <span>
+            Datos generales
+            <HelpTip title="Datos generales">
+              El <strong>Nombre genérico</strong> es el ingrediente activo (ej: Adalimumab) — es único, no se repite por marca.
+              El <strong>Código ATC</strong> y la <strong>Descripción ANMAT</strong> (mecanismo de acción / grupo farmacoterapéutico)
+              son datos de la droga en sí, iguales para todas sus marcas comerciales.
+            </HelpTip>
+          </span>
           <a href="https://servicios.pami.org.ar/vademecum/views/consultaPublica/listado.zul" target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 600 }}>
             Buscar en el Vademecum ↗
           </a>
@@ -159,7 +167,13 @@ export default function DrogaForm() {
 
         {!isNew && (
           <>
-            <div className="section-title">Marcas comerciales</div>
+            <div className="section-title">Marcas comerciales
+              <HelpTip title="Marcas comerciales">
+                Una misma droga puede venderse bajo varios nombres comerciales (ej: Adalimumab → AMGEVITA, HUMIRA, HULIO...).
+                Cada marca tiene su propio <strong>N° de Certificado ANMAT</strong> — por eso van separadas acá, y no en
+                los Datos generales. Cuando armás un expediente, elegís qué marca puntual se usó en ese caso.
+              </HelpTip>
+            </div>
             {marcas.map((marca) => (
               <div key={marca.id} className="card" style={{ marginBottom: 10, padding: 12 }}>
                 <div className="form-grid">
@@ -205,7 +219,14 @@ export default function DrogaForm() {
               </div>
             </div>
 
-            <div className="section-title">Fundamentación por patología</div>
+            <div className="section-title">Fundamentación por patología
+              <HelpTip title="Fundamentación por patología">
+                Cada droga puede usarse para más de una patología, y la justificación médica cambia según el caso —
+                por eso hay un texto de indicaciones distinto por cada combinación droga+patología. Este texto es el
+                que se autocompleta en el expediente cuando elegís esa misma droga con esa misma patología, y es el
+                que termina en el informe.
+              </HelpTip>
+            </div>
             {combos.length > 0 ? (
               combos.map((c) => {
                 const abierto = comboAbierto === c.id;
