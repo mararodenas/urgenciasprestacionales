@@ -7,6 +7,8 @@ import ObraSocialForm from './components/ObraSocialForm';
 import CatalogoDrogas from './components/CatalogoDrogas';
 import PatologiasList from './components/PatologiasList';
 import PatologiaForm from './components/PatologiaForm';
+import PlantillasList from './components/PlantillasList';
+import PlantillaForm from './components/PlantillaForm';
 
 export default function App() {
   return (
@@ -23,6 +25,9 @@ export default function App() {
           <Route path="/patologias" element={<PatologiasList />} />
           <Route path="/patologias/nueva" element={<PatologiaForm />} />
           <Route path="/patologias/:id" element={<PatologiaForm />} />
+          <Route path="/plantillas" element={<PlantillasList />} />
+          <Route path="/plantillas/nueva" element={<PlantillaForm />} />
+          <Route path="/plantillas/:id" element={<PlantillaForm />} />
         </Route>
       </Routes>
     </HashRouter>

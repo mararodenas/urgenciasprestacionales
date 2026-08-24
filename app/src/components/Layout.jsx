@@ -22,6 +22,9 @@ export default function Layout() {
           <NavLink to="/patologias" className={({ isActive }) => (isActive ? 'active' : '')}>
             <span className="dot" /> Patologías
           </NavLink>
+          <NavLink to="/plantillas" className={({ isActive }) => (isActive ? 'active' : '')}>
+            <span className="dot" /> Plantillas
+          </NavLink>
         </nav>
       </aside>
       <main className="main">
