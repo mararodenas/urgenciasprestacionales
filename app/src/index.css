@@ -574,12 +574,19 @@ a { color: var(--teal); text-decoration: none; }
 
 .paste-zone {
   padding: 8px 12px;
-  border: 1.5px dashed var(--line);
+  border: 1.5px dashed var(--teal);
   border-radius: var(--radius);
+  background: var(--teal-tint);
   text-align: center;
   font-size: 12.5px;
-  color: var(--ink-muted);
+  font-weight: 600;
+  color: var(--teal);
   cursor: text;
   outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 38px;
 }
-.paste-zone:focus { border-color: var(--teal); color: var(--ink); background: var(--teal-tint); }
+.paste-zone:focus { border-style: solid; box-shadow: 0 0 0 2px var(--teal-tint); }
