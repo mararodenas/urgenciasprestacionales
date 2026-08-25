@@ -54,7 +54,7 @@ export default function ObraSocialModal({ open, initialNombre, initialTipo, init
           <button className="btn btn-ghost" onClick={onClose}>✕</button>
         </div>
         <div className="modal-body">
-          <div className="section-title" style={{ marginTop: 0 }}>Datos generales</div>
+          <div className="section-title section-title-flush">Datos generales</div>
           <div className="form-grid">
             <div className="field span-2">
               <label>Nombre</label>

@@ -72,7 +72,7 @@ export default function PlantillaForm() {
       </div>
 
       <div className="card card-pad">
-        <div className="section-title" style={{ marginTop: 0 }}>Datos generales
+        <div className="section-title section-title-flush">Datos generales
           <HelpTip title="Datos generales">
             El nombre identifica la plantilla en el desplegable "Plantilla del informe" de cada expediente — elegí
             un nombre claro por tipo de caso (ej: Oncología, Reumatología).

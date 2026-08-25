@@ -461,7 +461,7 @@ export default function ExpedienteForm() {
       </div>
 
       <div className="card card-pad">
-        <div className="section-title" style={{ marginTop: 0 }}>Expediente</div>
+        <div className="section-title section-title-flush">Expediente</div>
         <div className="form-grid">
           <div className="field">
             <label>N° EE</label>

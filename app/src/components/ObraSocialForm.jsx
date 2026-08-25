@@ -135,7 +135,7 @@ export default function ObraSocialForm() {
       </div>
 
       <div className="card card-pad">
-        <div className="section-title">Datos generales</div>
+        <div className="section-title section-title-flush">Datos generales</div>
         <div className="form-grid">
           <div className="field span-2">
             <label>Nombre</label>

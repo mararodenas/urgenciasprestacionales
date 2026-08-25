@@ -124,7 +124,7 @@ export default function PatologiaForm() {
       </div>
 
       <div className="card card-pad">
-        <div className="section-title" style={{ marginTop: 0 }}>Datos generales
+        <div className="section-title section-title-flush">Datos generales
           <HelpTip title="Datos generales">
             Solo el <strong>nombre</strong> de la patología. Se usa como opción en el desplegable "Patología" de cada
             expediente, y agrupa las drogas/fundamentaciones asociadas de abajo. La descripción de cada caso puntual

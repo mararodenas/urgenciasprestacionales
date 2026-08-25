@@ -137,7 +137,7 @@ export default function DrogaForm() {
       </div>
 
       <div className="card card-pad">
-        <div className="section-title" style={{ marginTop: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <div className="section-title section-title-flush" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <span>
             Datos generales
             <HelpTip title="Datos generales">
