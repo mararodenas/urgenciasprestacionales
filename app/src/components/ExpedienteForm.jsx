@@ -779,6 +779,12 @@ export default function ExpedienteForm() {
         ) : (
           <p className="hint">Guardá el expediente para poder generar el informe.</p>
         )}
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--line)' }}>
+          <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+            {saving ? 'Guardando...' : 'Guardar'}
+          </button>
+        </div>
       </div>
       <ObraSocialModal
         open={obraSocialModalOpen}
