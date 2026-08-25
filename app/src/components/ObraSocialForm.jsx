@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from '../lib/useToast.jsx';
 import { useConfirm } from '../lib/useConfirm.jsx';
+import HelpTip from './HelpTip';
 
 const empty = {
   tipo: 'Obra Social',
@@ -25,6 +26,8 @@ export default function ObraSocialForm() {
   const { showToast, ToastEl } = useToast();
   const { confirmAction, ConfirmEl } = useConfirm();
   const [form, setForm] = useState(empty);
+  const [filiales, setFiliales] = useState([]);
+  const [nuevaFilial, setNuevaFilial] = useState({ nombre: '', localidad: '', provincia: '', telefono: '', email: '' });
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
 
@@ -33,6 +36,9 @@ export default function ObraSocialForm() {
       supabase.from('obras_sociales').select('*').eq('id', id).single().then(({ data }) => {
         if (data) setForm(data);
         setLoading(false);
+      });
+      supabase.from('filiales').select('*').eq('obra_social_id', id).order('nombre').then(({ data }) => {
+        setFiliales(data ?? []);
       });
     }
   }, [id]);
@@ -64,6 +70,44 @@ export default function ObraSocialForm() {
     const { error } = await supabase.from('obras_sociales').delete().eq('id', id);
     if (error) { showToast('No se pudo eliminar: ' + error.message); return; }
     navigate('/obras-sociales');
+  }
+
+  async function crearFilial() {
+    if (!nuevaFilial.nombre.trim()) return;
+    const { data, error } = await supabase.from('filiales').insert({
+      obra_social_id: id,
+      nombre: nuevaFilial.nombre.trim(),
+      localidad: nuevaFilial.localidad.trim() || null,
+      provincia: nuevaFilial.provincia.trim() || null,
+      telefono: nuevaFilial.telefono.trim() || null,
+      email: nuevaFilial.email.trim() || null,
+    }).select().single();
+    if (error) { showToast('Error: ' + error.message); return; }
+    setFiliales((prev) => [...prev, data]);
+    setNuevaFilial({ nombre: '', localidad: '', provincia: '', telefono: '', email: '' });
+    showToast('Filial agregada');
+  }
+
+  function actualizarFilial(filialId, campo, valor) {
+    setFiliales((prev) => prev.map((f) => (f.id === filialId ? { ...f, [campo]: valor } : f)));
+  }
+
+  async function guardarFilial(filial) {
+    const { error } = await supabase.from('filiales').update({
+      nombre: filial.nombre,
+      localidad: filial.localidad,
+      provincia: filial.provincia,
+      telefono: filial.telefono,
+      email: filial.email,
+    }).eq('id', filial.id);
+    if (error) showToast('Error: ' + error.message);
+    else showToast('Guardado');
+  }
+
+  async function eliminarFilial(filialId) {
+    const { error } = await supabase.from('filiales').delete().eq('id', filialId);
+    if (error) { showToast('Error: ' + error.message); return; }
+    setFiliales((prev) => prev.filter((f) => f.id !== filialId));
   }
 
   if (loading) return <div className="empty-state">Cargando...</div>;
@@ -163,6 +207,74 @@ export default function ObraSocialForm() {
             </div>
           </div>
         ))}
+
+        {!isNew && (
+          <>
+            <div className="section-title">Filiales / Delegaciones
+              <HelpTip title="Filiales">
+                Si esta entidad tiene sucursales o delegaciones regionales (ej: "Filial Rosario", "Delegación Tandil"),
+                cargalas acá. Al elegir esta Obra Social/EMP en un expediente, vas a poder elegir a cuál filial puntual
+                corresponde el caso — útil cuando el reclamo se dirige a una delegación específica.
+              </HelpTip>
+            </div>
+            {filiales.map((f) => (
+              <div key={f.id} className="card" style={{ marginBottom: 10, padding: 12 }}>
+                <div className="form-grid">
+                  <div className="field span-2">
+                    <label>Nombre de la filial</label>
+                    <input value={f.nombre} onChange={(e) => actualizarFilial(f.id, 'nombre', e.target.value)} onBlur={() => guardarFilial(f)} />
+                  </div>
+                  <div className="field">
+                    <label>Localidad</label>
+                    <input value={f.localidad ?? ''} onChange={(e) => actualizarFilial(f.id, 'localidad', e.target.value)} onBlur={() => guardarFilial(f)} />
+                  </div>
+                  <div className="field">
+                    <label>Provincia</label>
+                    <input value={f.provincia ?? ''} onChange={(e) => actualizarFilial(f.id, 'provincia', e.target.value)} onBlur={() => guardarFilial(f)} />
+                  </div>
+                  <div className="field">
+                    <label>Teléfono</label>
+                    <input value={f.telefono ?? ''} onChange={(e) => actualizarFilial(f.id, 'telefono', e.target.value)} onBlur={() => guardarFilial(f)} />
+                  </div>
+                  <div className="field">
+                    <label>Email</label>
+                    <input value={f.email ?? ''} onChange={(e) => actualizarFilial(f.id, 'email', e.target.value)} onBlur={() => guardarFilial(f)} />
+                  </div>
+                  <div className="field" style={{ justifyContent: 'flex-end' }}>
+                    <button className="btn btn-ghost btn-danger" onClick={() => eliminarFilial(f.id)}>Eliminar filial</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div className="card" style={{ padding: 12, background: 'var(--teal-tint)' }}>
+              <div className="form-grid">
+                <div className="field span-2">
+                  <label>+ Nueva filial</label>
+                  <input
+                    placeholder="Nombre (ej: Filial Rosario)"
+                    value={nuevaFilial.nombre}
+                    onChange={(e) => setNuevaFilial((f) => ({ ...f, nombre: e.target.value }))}
+                  />
+                </div>
+                <div className="field">
+                  <label>Localidad</label>
+                  <input value={nuevaFilial.localidad} onChange={(e) => setNuevaFilial((f) => ({ ...f, localidad: e.target.value }))} />
+                </div>
+                <div className="field">
+                  <label>Provincia</label>
+                  <input value={nuevaFilial.provincia} onChange={(e) => setNuevaFilial((f) => ({ ...f, provincia: e.target.value }))} />
+                </div>
+                <div className="field">
+                  <label>Teléfono</label>
+                  <input value={nuevaFilial.telefono} onChange={(e) => setNuevaFilial((f) => ({ ...f, telefono: e.target.value }))} />
+                </div>
+                <div className="field" style={{ justifyContent: 'flex-end' }}>
+                  <button className="btn btn-primary" onClick={crearFilial}>+ Agregar filial</button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
 
         <div className="section-title">Información adicional</div>
         <div className="field">

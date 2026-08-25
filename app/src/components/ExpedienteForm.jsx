@@ -27,6 +27,7 @@ const emptyForm = {
   diagnostico_detalle: '',
   resumen_hc: '',
   obra_social_id: null,
+  filial_id: null,
   plantilla_id: null,
   pasos_resolucion: '',
 };
@@ -386,12 +387,19 @@ export default function ExpedienteForm() {
     const marcasInfo = drogasSeleccionadas.map((d) => marcasCatalogo.find((m) => m.id === d.marca_id) ?? null);
     const fundamentacionesHtml = drogasSeleccionadas.map((d) => d.fundamentacion);
 
+    let filialNombre = null;
+    if (form.filial_id) {
+      const { data } = await supabase.from('filiales').select('nombre').eq('id', form.filial_id).maybeSingle();
+      filialNombre = data?.nombre ?? null;
+    }
+
     setGenerandoInforme(tipo);
     let blob;
     try {
       blob = await generarInformeDocx({
         expediente: form,
         obraSocial,
+        filialNombre,
         patologiaNombre: patologia?.nombre,
         drogas: drogasInfo,
         marcas: marcasInfo,
@@ -492,6 +500,8 @@ export default function ExpedienteForm() {
               value={form.obra_social_id}
               onChange={(id) => setField('obra_social_id', id)}
               onCrear={abrirCrearObraSocial}
+              filialValue={form.filial_id}
+              onFilialChange={(fid) => setField('filial_id', fid)}
             />
           </div>
         </div>

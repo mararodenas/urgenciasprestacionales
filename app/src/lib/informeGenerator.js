@@ -12,13 +12,14 @@ import { htmlToDocxParagraphs, plainTextToDocxParagraphs } from './htmlToDocx';
 // plantilla: { texto_apertura, texto_cierre_tecnico } | null
 // gestionHtml: string — HTML del campo "Gestión" (texto libre)
 export async function generarInformeDocx({
-  expediente, obraSocial, patologiaNombre, drogas, marcas, fundamentacionesHtml, plantilla, gestionHtml, tipo,
+  expediente, obraSocial, filialNombre, patologiaNombre, drogas, marcas, fundamentacionesHtml, plantilla, gestionHtml, tipo,
 }) {
   const denuncianteNombre = expediente.denunciante_nombre?.trim() || expediente.nombre_paciente;
   const denuncianteDni = expediente.denunciante_dni_cuit?.trim() || expediente.dni_cuit_paciente?.trim() || '';
 
   const codigoOS = obraSocial?.tipo === 'Obra Social' ? obraSocial?.rnas : obraSocial?.rnemp;
   const nombreComercialOS = obraSocial?.nombre_comercial ? ` (${obraSocial.nombre_comercial})` : '';
+  const filialTexto = filialNombre ? ` — ${filialNombre}` : '';
 
   const parrafoApertura = new Paragraph({
     spacing: { after: 240 },
@@ -29,7 +30,7 @@ export async function generarInformeDocx({
       new TextRun({ text: expediente.nombre_paciente, bold: true }),
       new TextRun(' contra el Agente de Seguro Nº '),
       new TextRun({
-        text: obraSocial ? `${codigoOS ?? ''} ${obraSocial.nombre}${nombreComercialOS}` : '(Obra Social/EMP no seleccionada en el expediente)',
+        text: obraSocial ? `${codigoOS ?? ''} ${obraSocial.nombre}${nombreComercialOS}${filialTexto}` : '(Obra Social/EMP no seleccionada en el expediente)',
         bold: true,
       }),
       new TextRun(', con motivo de '),

@@ -664,3 +664,9 @@ a { color: var(--teal); text-decoration: none; }
   font-weight: 700;
   color: var(--teal-dark);
 }
+
+/* ---------- Bloque prolijo de datos de la entidad seleccionada ---------- */
+.os-datos { border-collapse: collapse; font-size: 12.5px; }
+.os-datos td { padding: 2px 0; vertical-align: top; }
+.os-datos td:first-child { color: var(--ink-muted); padding-right: 10px; white-space: nowrap; }
+.os-datos td:last-child { font-weight: 600; }
