@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <circle cx="24" cy="24" r="23" fill="#073f36"/>
+  <circle cx="24" cy="24" r="23" fill="none" stroke="#eef4f2" stroke-width="1.5" opacity="0.55"/>
+  <text x="24" y="31" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="19" fill="#eef4f2">UP</text>
+</svg>
