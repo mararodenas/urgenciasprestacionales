@@ -511,21 +511,6 @@ export default function ExpedienteForm() {
           </div>
         </div>
 
-        <div className="section-title">Obra Social / EMP</div>
-        <div className="form-grid">
-          <div className="field span-4">
-            <label>Entidad (buscar por RNAS o RNEMP)</label>
-            <ObraSocialCodeSelector
-              obrasSociales={obrasSociales}
-              value={form.obra_social_id}
-              onChange={(id) => setField('obra_social_id', id)}
-              onCrear={abrirCrearObraSocial}
-              filialValue={form.filial_id}
-              onFilialChange={(fid) => setField('filial_id', fid)}
-            />
-          </div>
-        </div>
-
         <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <span>Denunciante <span className="hint">(si es distinto del afiliado)</span></span>
           <button
@@ -545,6 +530,21 @@ export default function ExpedienteForm() {
           <div className="field span-2">
             <label>DNI / CUIT <span className="hint">(opcional)</span></label>
             <input value={form.denunciante_dni_cuit ?? ''} onChange={(e) => setField('denunciante_dni_cuit', e.target.value)} />
+          </div>
+        </div>
+
+        <div className="section-title">Obra Social / EMP</div>
+        <div className="form-grid">
+          <div className="field span-4">
+            <label>Entidad (buscar por RNAS o RNEMP)</label>
+            <ObraSocialCodeSelector
+              obrasSociales={obrasSociales}
+              value={form.obra_social_id}
+              onChange={(id) => setField('obra_social_id', id)}
+              onCrear={abrirCrearObraSocial}
+              filialValue={form.filial_id}
+              onFilialChange={(fid) => setField('filial_id', fid)}
+            />
           </div>
         </div>
 
