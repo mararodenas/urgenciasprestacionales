@@ -491,21 +491,6 @@ export default function ExpedienteForm() {
           </div>
         </div>
 
-        <div className="section-title">Obra Social / EMP</div>
-        <div className="form-grid">
-          <div className="field span-4">
-            <label>Entidad (buscar por RNAS o RNEMP)</label>
-            <ObraSocialCodeSelector
-              obrasSociales={obrasSociales}
-              value={form.obra_social_id}
-              onChange={(id) => setField('obra_social_id', id)}
-              onCrear={abrirCrearObraSocial}
-              filialValue={form.filial_id}
-              onFilialChange={(fid) => setField('filial_id', fid)}
-            />
-          </div>
-        </div>
-
         <div className="section-title">Datos filiatorios</div>
         <div className="form-grid">
           <div className="field span-2">
@@ -523,6 +508,21 @@ export default function ExpedienteForm() {
           <div className="field span-2">
             <label>Email</label>
             <input value={form.email_paciente ?? ''} onChange={(e) => setField('email_paciente', e.target.value)} />
+          </div>
+        </div>
+
+        <div className="section-title">Obra Social / EMP</div>
+        <div className="form-grid">
+          <div className="field span-4">
+            <label>Entidad (buscar por RNAS o RNEMP)</label>
+            <ObraSocialCodeSelector
+              obrasSociales={obrasSociales}
+              value={form.obra_social_id}
+              onChange={(id) => setField('obra_social_id', id)}
+              onCrear={abrirCrearObraSocial}
+              filialValue={form.filial_id}
+              onFilialChange={(fid) => setField('filial_id', fid)}
+            />
           </div>
         </div>
 
