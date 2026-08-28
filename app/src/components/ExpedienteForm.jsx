@@ -9,6 +9,8 @@ import HelpTip from './HelpTip';
 import { useToast } from '../lib/useToast.jsx';
 import { useConfirm } from '../lib/useConfirm.jsx';
 import { generarInformeDocx } from '../lib/informeGenerator';
+import { generarMailOS, generarMailAfiliado } from '../lib/mailGenerator';
+import MailModal from './MailModal';
 
 const emptyForm = {
   numero_ee: '',
@@ -66,6 +68,8 @@ export default function ExpedienteForm() {
   const [obraSocialModalOpen, setObraSocialModalOpen] = useState(false);
   const [obraSocialModalTipo, setObraSocialModalTipo] = useState('Obra Social');
   const [obraSocialModalCodigo, setObraSocialModalCodigo] = useState('');
+  const [mailModal, setMailModal] = useState(null); // { title, texto } | null
+  const [tipoTratamiento, setTipoTratamiento] = useState('');
 
   useEffect(() => {
     loadCatalogos();
@@ -112,7 +116,7 @@ export default function ExpedienteForm() {
 
     const { data: meds } = await supabase
       .from('expediente_medicamentos')
-      .select('droga_id, marca_id')
+      .select('droga_id, marca_id, dosis')
       .eq('expediente_id', id);
 
     if (meds?.length) {
@@ -139,6 +143,7 @@ export default function ExpedienteForm() {
         meds.map((m, i) => ({
           droga_id: m.droga_id,
           marca_id: m.marca_id ?? null,
+          dosis: m.dosis ?? '',
           fundamentacion: infoPorId[m.droga_id]?.es_soporte
             ? (infoPorId[m.droga_id]?.fundamentacion_general ?? '')
             : (combos[i]?.data?.fundamentacion_texto ?? ''),
@@ -244,7 +249,7 @@ export default function ExpedienteForm() {
         .maybeSingle();
       fundamentacion = data?.fundamentacion_texto ?? '';
     }
-    setDrogasSeleccionadas((prev) => [...prev, { droga_id: drogaId, marca_id: null, fundamentacion }]);
+    setDrogasSeleccionadas((prev) => [...prev, { droga_id: drogaId, marca_id: null, dosis: '', fundamentacion }]);
   }
 
   function quitarDroga(drogaId) {
@@ -255,13 +260,19 @@ export default function ExpedienteForm() {
     setDrogasSeleccionadas((prev) => {
       const yaEsta = prev.some((d) => d.droga_id === drogaId);
       if (yaEsta) return prev.filter((d) => d.droga_id !== drogaId);
-      return [...prev, { droga_id: drogaId, marca_id: null, fundamentacion: fundamentacionPrevia ?? '' }];
+      return [...prev, { droga_id: drogaId, marca_id: null, dosis: '', fundamentacion: fundamentacionPrevia ?? '' }];
     });
   }
 
   function setFundamentacion(drogaId, texto) {
     setDrogasSeleccionadas((prev) =>
       prev.map((d) => (d.droga_id === drogaId ? { ...d, fundamentacion: texto } : d))
+    );
+  }
+
+  function setDosis(drogaId, valor) {
+    setDrogasSeleccionadas((prev) =>
+      prev.map((d) => (d.droga_id === drogaId ? { ...d, dosis: valor } : d))
     );
   }
 
@@ -338,7 +349,12 @@ export default function ExpedienteForm() {
     await supabase.from('expediente_medicamentos').delete().eq('expediente_id', expedienteId);
     if (drogasSeleccionadas.length) {
       await supabase.from('expediente_medicamentos').insert(
-        drogasSeleccionadas.map((d) => ({ expediente_id: expedienteId, droga_id: d.droga_id, marca_id: d.marca_id ?? null }))
+        drogasSeleccionadas.map((d) => ({
+          expediente_id: expedienteId,
+          droga_id: d.droga_id,
+          marca_id: d.marca_id ?? null,
+          dosis: d.dosis?.trim() || null,
+        }))
       );
     }
 
@@ -419,6 +435,26 @@ export default function ExpedienteForm() {
     showToast('Adjunto eliminado');
   }
 
+
+  function datosParaMail() {
+    const patologia = patologias.find((p) => p.id === form.patologia_id);
+    const obraSocial = obrasSociales.find((o) => o.id === form.obra_social_id);
+    const drogas = drogasSeleccionadas.map((d) => ({
+      nombre: drogasCatalogo.find((c) => c.id === d.droga_id)?.nombre ?? '',
+      dosis: d.dosis ?? '',
+    }));
+    return { expediente: form, obraSocial, patologiaNombre: patologia?.nombre, drogas };
+  }
+
+  function handleGenerarMailOS() {
+    const texto = generarMailOS({ ...datosParaMail(), tipoTratamiento });
+    setMailModal({ title: 'Mail a la Obra Social / EMP', texto, esOS: true });
+  }
+
+  function handleGenerarMailAfiliado() {
+    const texto = generarMailAfiliado(datosParaMail());
+    setMailModal({ title: 'Mail al afiliado', texto, esOS: false });
+  }
 
   async function handleGenerarInforme(tipo) {
     if (!id) { showToast('Guardá el expediente antes de generar el informe'); return; }
@@ -765,6 +801,14 @@ export default function ExpedienteForm() {
                       <input value={marcaElegida?.numero_anmat ?? ''} disabled />
                     </div>
                     <div className="field">
+                      <label>Dosis <span className="hint">(para el mail a OS/afiliado)</span></label>
+                      <input
+                        value={d.dosis ?? ''}
+                        onChange={(e) => setDosis(d.droga_id, e.target.value)}
+                        placeholder="ej: 500 mg"
+                      />
+                    </div>
+                    <div className="field">
                       <label>Código ATC</label>
                       <input
                         value={info?.codigo_atc ?? ''}
@@ -890,6 +934,17 @@ export default function ExpedienteForm() {
         <>
         {!isNew ? (
           <>
+            <div className="dictamen-bar" style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-muted)', marginRight: 4 }}>
+                Mails <span className="hint">(arman el texto para copiar y pegar)</span>
+              </label>
+              <button className="btn btn-secondary" onClick={handleGenerarMailOS}>
+                Generar mail a OS/EMP
+              </button>
+              <button className="btn btn-secondary" onClick={handleGenerarMailAfiliado}>
+                Generar mail al afiliado
+              </button>
+            </div>
             <div className="dictamen-bar">
               <div className="field" style={{ flex: 1, minWidth: 220 }}>
                 <label>Plantilla del informe</label>
@@ -942,6 +997,21 @@ export default function ExpedienteForm() {
         initialCodigo={obraSocialModalCodigo}
         onClose={handleObraSocialModalClose}
         onSaved={handleObraSocialGuardada}
+      />
+      <MailModal
+        open={!!mailModal}
+        title={mailModal?.title ?? ''}
+        texto={mailModal?.texto ?? ''}
+        onClose={() => setMailModal(null)}
+        tipoTratamiento={mailModal?.esOS ? tipoTratamiento : undefined}
+        onTipoTratamientoChange={
+          mailModal?.esOS
+            ? (v) => {
+                setTipoTratamiento(v);
+                setMailModal((m) => (m ? { ...m, texto: generarMailOS({ ...datosParaMail(), tipoTratamiento: v }) } : m));
+              }
+            : undefined
+        }
       />
       {ToastEl}
       {ConfirmEl}
