@@ -50,11 +50,11 @@ export default function ExpedienteForm() {
   const [afiliadoEsDenunciante, setAfiliadoEsDenunciante] = useState(true);
   const [abiertas, setAbiertas] = useState({
     expediente: true,
-    afiliado: true,
-    solicitud: true,
-    drogas: true,
-    analisis: true,
-    dictamen: true,
+    afiliado: false,
+    solicitud: false,
+    drogas: false,
+    analisis: false,
+    dictamen: false,
   });
   const toggleAbierta = (key) => setAbiertas((a) => ({ ...a, [key]: !a[key] }));
   const [adjuntos, setAdjuntos] = useState([]);
