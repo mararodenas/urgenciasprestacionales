@@ -16,6 +16,8 @@ export default function DrogaForm() {
   const [nombre, setNombre] = useState('');
   const [codigoAtc, setCodigoAtc] = useState('');
   const [descripcionAnmat, setDescripcionAnmat] = useState('');
+  const [esSoporte, setEsSoporte] = useState(false);
+  const [fundamentacionGeneral, setFundamentacionGeneral] = useState('');
   const [marcas, setMarcas] = useState([]);
   const [nuevaMarca, setNuevaMarca] = useState({ nombre_comercial: '', numero_anmat: '', laboratorio: '' });
   const [combos, setCombos] = useState([]);
@@ -32,7 +34,13 @@ export default function DrogaForm() {
     if (!isNew) {
       setLoading(true);
       const { data: droga } = await supabase.from('drogas').select('*').eq('id', id).single();
-      if (droga) { setNombre(droga.nombre); setCodigoAtc(droga.codigo_atc ?? ''); setDescripcionAnmat(droga.descripcion_anmat ?? ''); }
+      if (droga) {
+        setNombre(droga.nombre);
+        setCodigoAtc(droga.codigo_atc ?? '');
+        setDescripcionAnmat(droga.descripcion_anmat ?? '');
+        setEsSoporte(droga.es_soporte ?? false);
+        setFundamentacionGeneral(droga.fundamentacion_general ?? '');
+      }
       const [m, c] = await Promise.all([
         supabase.from('marcas_comerciales').select('*').eq('droga_id', id).order('nombre_comercial'),
         supabase.from('droga_patologia').select('*').eq('droga_id', id),
@@ -46,7 +54,13 @@ export default function DrogaForm() {
   async function handleSave() {
     if (!nombre.trim()) { showToast('Falta el nombre genérico'); return; }
     setSaving(true);
-    const payload = { nombre: nombre.trim(), codigo_atc: codigoAtc, descripcion_anmat: descripcionAnmat };
+    const payload = {
+      nombre: nombre.trim(),
+      codigo_atc: codigoAtc,
+      descripcion_anmat: descripcionAnmat,
+      es_soporte: esSoporte,
+      fundamentacion_general: esSoporte ? fundamentacionGeneral : null,
+    };
     if (isNew) {
       const { data, error } = await supabase.from('drogas').insert(payload).select().single();
       setSaving(false);
@@ -163,6 +177,12 @@ export default function DrogaForm() {
             <label>Descripción ANMAT <span className="hint">(mecanismo de acción / grupo farmacoterapéutico)</span></label>
             <textarea value={descripcionAnmat} onChange={(e) => setDescripcionAnmat(e.target.value)} />
           </div>
+          <div className="field span-4">
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 400 }}>
+              <input type="checkbox" checked={esSoporte} onChange={(e) => setEsSoporte(e.target.checked)} />
+              Droga de uso general / soporte <span className="hint">(ej. antieméticos como Ondansetrón: se usa junto con cualquier patología, no tiene una indicación puntual por patología)</span>
+            </label>
+          </div>
         </div>
 
         {!isNew && (
@@ -219,6 +239,30 @@ export default function DrogaForm() {
               </div>
             </div>
 
+            {esSoporte ? (
+              <>
+                <div className="section-title">Fundamentación general
+                  <HelpTip title="Fundamentación general">
+                    Como es una droga de uso general/soporte, tiene un único texto de indicaciones válido para
+                    cualquier patología — no se pide elegir una patología puntual. Este texto se autocompleta en
+                    cualquier expediente donde se agregue esta droga, y es el que termina en el informe.
+                  </HelpTip>
+                </div>
+                <RichTextEditor
+                  value={fundamentacionGeneral}
+                  onChange={setFundamentacionGeneral}
+                  onBlurSave={handleSave}
+                />
+                {combos.length > 0 && (
+                  <p className="hint" style={{ marginTop: 8 }}>
+                    Nota: esta droga tiene {combos.length} asociación(es) vieja(s) a patologías puntuales, de cuando
+                    todavía no estaba marcada como "de soporte". Ya no se usan ni se les suma nuevas, pero quedan
+                    guardadas. Se pueden borrar desde la base si hace falta.
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
             <div className="section-title">Fundamentación por patología
               <HelpTip title="Fundamentación por patología">
                 Cada droga puede usarse para más de una patología, y la justificación médica cambia según el caso —
@@ -262,6 +306,8 @@ export default function DrogaForm() {
                 Todavía no se usó esta droga en ninguna patología. Se genera automáticamente la primera vez
                 que la asociás desde la ficha de una Patología o desde un expediente.
               </p>
+            )}
+              </>
             )}
           </>
         )}

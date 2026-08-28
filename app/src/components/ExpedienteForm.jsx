@@ -66,7 +66,7 @@ export default function ExpedienteForm() {
     const [pat, os, dr, mc, pl] = await Promise.all([
       supabase.from('patologias').select('id, nombre').order('nombre'),
       supabase.from('obras_sociales').select('id, nombre, tipo, rnas, rnemp, cuit, nombre_comercial').order('nombre'),
-      supabase.from('drogas').select('id, nombre, codigo_atc, descripcion_anmat').order('nombre'),
+      supabase.from('drogas').select('id, nombre, codigo_atc, descripcion_anmat, es_soporte, fundamentacion_general').order('nombre'),
       supabase.from('marcas_comerciales').select('id, droga_id, nombre_comercial, numero_anmat, laboratorio').order('nombre_comercial'),
       supabase.from('plantillas_informe').select('*').order('nombre'),
     ]);
@@ -88,26 +88,35 @@ export default function ExpedienteForm() {
       .select('droga_id, marca_id')
       .eq('expediente_id', id);
 
-    if (meds?.length && exp?.patologia_id) {
+    if (meds?.length) {
+      const drogaIds = meds.map((m) => m.droga_id);
+      const { data: drogasInfo } = await supabase
+        .from('drogas')
+        .select('id, es_soporte, fundamentacion_general')
+        .in('id', drogaIds);
+      const infoPorId = Object.fromEntries((drogasInfo ?? []).map((d) => [d.id, d]));
+
       const combos = await Promise.all(
         meds.map((m) =>
-          supabase
-            .from('droga_patologia')
-            .select('fundamentacion_texto')
-            .eq('droga_id', m.droga_id)
-            .eq('patologia_id', exp.patologia_id)
-            .maybeSingle()
+          infoPorId[m.droga_id]?.es_soporte || !exp?.patologia_id
+            ? Promise.resolve(null)
+            : supabase
+                .from('droga_patologia')
+                .select('fundamentacion_texto')
+                .eq('droga_id', m.droga_id)
+                .eq('patologia_id', exp.patologia_id)
+                .maybeSingle()
         )
       );
       setDrogasSeleccionadas(
         meds.map((m, i) => ({
           droga_id: m.droga_id,
           marca_id: m.marca_id ?? null,
-          fundamentacion: combos[i].data?.fundamentacion_texto ?? '',
+          fundamentacion: infoPorId[m.droga_id]?.es_soporte
+            ? (infoPorId[m.droga_id]?.fundamentacion_general ?? '')
+            : (combos[i]?.data?.fundamentacion_texto ?? ''),
         }))
       );
-    } else if (meds?.length) {
-      setDrogasSeleccionadas(meds.map((m) => ({ droga_id: m.droga_id, marca_id: m.marca_id ?? null, fundamentacion: '' })));
     }
 
     const { data: adj } = await supabase
@@ -195,8 +204,11 @@ export default function ExpedienteForm() {
 
   async function agregarDroga(drogaId) {
     if (drogasSeleccionadas.some((d) => d.droga_id === drogaId)) return;
+    const drogaInfo = drogasCatalogo.find((d) => d.id === drogaId);
     let fundamentacion = '';
-    if (form.patologia_id) {
+    if (drogaInfo?.es_soporte) {
+      fundamentacion = drogaInfo.fundamentacion_general ?? '';
+    } else if (form.patologia_id) {
       const { data } = await supabase
         .from('droga_patologia')
         .select('fundamentacion_texto')
@@ -304,8 +316,11 @@ export default function ExpedienteForm() {
     }
 
     // guardar/actualizar fundamentación droga+patología (reutilizable a futuro)
+    // las drogas de soporte (es_soporte=true) no se asocian a una patología puntual
     if (form.patologia_id) {
       for (const d of drogasSeleccionadas) {
+        const info = drogasCatalogo.find((c) => c.id === d.droga_id);
+        if (info?.es_soporte) continue;
         await supabase
           .from('droga_patologia')
           .upsert(
@@ -582,6 +597,26 @@ export default function ExpedienteForm() {
           </div>
         </div>
 
+        {drogasCatalogo.some((d) => d.es_soporte) && (
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-muted)', display: 'block', marginBottom: 6 }}>
+              Drogas de soporte <span className="hint">— antieméticos y similares, aplican a cualquier patología</span>
+            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {drogasCatalogo.filter((d) => d.es_soporte).map((d) => (
+                <label key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13.5 }}>
+                  <input
+                    type="checkbox"
+                    checked={drogasSeleccionadas.some((s) => s.droga_id === d.id)}
+                    onChange={() => toggleDrogaAsociada(d.id, d.fundamentacion_general)}
+                  />
+                  {d.nombre}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
         {form.patologia_id && drogasAsociadasPatologia.length > 0 && (
           <div style={{ marginBottom: 14 }}>
             <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-muted)', display: 'block', marginBottom: 6 }}>
@@ -673,13 +708,20 @@ export default function ExpedienteForm() {
                     </div>
                   </div>
                   <div className="field">
-                    <label>Indicaciones médicas / mecanismo de acción para esta patología
-                      <span className="hint"> — se autocompleta si ya se cargó antes esta combinación</span>
+                    <label>
+                      {info?.es_soporte
+                        ? 'Indicaciones médicas / mecanismo de acción (uso general)'
+                        : 'Indicaciones médicas / mecanismo de acción para esta patología'}
+                      <span className="hint">
+                        {info?.es_soporte
+                          ? ' — droga de soporte, válida para cualquier patología'
+                          : ' — se autocompleta si ya se cargó antes esta combinación'}
+                      </span>
                     </label>
                     <RichTextEditor
                       value={d.fundamentacion}
                       onChange={(html) => setFundamentacion(d.droga_id, html)}
-                      placeholder={form.patologia_id ? 'Escribí la fundamentación...' : 'Elegí primero una patología'}
+                      placeholder={info?.es_soporte || form.patologia_id ? 'Escribí la fundamentación...' : 'Elegí primero una patología'}
                       minHeight={90}
                     />
                   </div>

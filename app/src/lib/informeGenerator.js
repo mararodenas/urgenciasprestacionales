@@ -72,7 +72,14 @@ export async function generarInformeDocx({
       }),
       new Paragraph({
         spacing: { after: 120 },
-        children: [new TextRun({ text: `Indicaciones Médicas y Mecanismo de Acción en: ${patologiaNombre ?? ''}`, bold: true })],
+        children: [
+          new TextRun({
+            text: droga?.es_soporte
+              ? 'Indicaciones Médicas y Mecanismo de Acción (medicación de soporte — uso general)'
+              : `Indicaciones Médicas y Mecanismo de Acción en: ${patologiaNombre ?? ''}`,
+            bold: true,
+          }),
+        ],
       }),
       ...(await htmlToDocxParagraphs(fundamentacionesHtml[i], { emptyText: '(sin fundamentación cargada para esta combinación)' }))
     );
