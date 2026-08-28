@@ -1,4 +1,4 @@
-import { Document, Packer, Paragraph, TextRun, BorderStyle } from 'docx';
+import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 import { REFERENCIA, TRASLADO_FIJO, CIERRE } from './informeTemplates';
 import { htmlToDocxParagraphs, plainTextToDocxParagraphs } from './htmlToDocx';
@@ -42,32 +42,33 @@ export async function generarInformeDocx({
   for (let i = 0; i < drogas.length; i++) {
     const droga = drogas[i];
     const marca = marcas[i];
-    const certificado = marca?.numero_anmat ? ` — Certificado ANMAT Nº ${marca.numero_anmat}` : '';
-
-    // separador visual entre cada droga cuando hay más de una
-    if (i > 0) {
-      droguerBlocks.push(
-        new Paragraph({
-          spacing: { before: 100, after: 200 },
-          border: { bottom: { color: 'BFBFBF', space: 1, style: BorderStyle.SINGLE, size: 6 } },
-          children: [new TextRun('')],
-        })
-      );
-    }
 
     droguerBlocks.push(
       new Paragraph({
+        spacing: { before: i > 0 ? 200 : 0, after: 60 },
+        children:
+          drogas.length > 1
+            ? [new TextRun({ text: `${i + 1}) ${droga?.nombre ?? ''}`, bold: true })]
+            : [
+                new TextRun({ text: 'Droga / Medicación solicitada: ', bold: true }),
+                new TextRun({ text: (droga?.nombre ?? '').toUpperCase(), bold: true }),
+              ],
+      }),
+      new Paragraph({
         spacing: { after: 60 },
         children: [
-          new TextRun({ text: drogas.length > 1 ? `Medicación ${i + 1} de ${drogas.length}: ` : 'Droga / Medicación solicitada: ', bold: true }),
-          new TextRun({ text: (droga?.nombre ?? '').toUpperCase(), bold: true }),
+          new TextRun({ text: 'Nombre comercial: ', bold: true }),
+          new TextRun(marca?.nombre_comercial || '(sin marca especificada)'),
         ],
       }),
       new Paragraph({
         spacing: { after: 160 },
         children: [
-          new TextRun({ text: 'Nombre comercial: ', bold: true }),
-          new TextRun(marca?.nombre_comercial ? `${marca.nombre_comercial}${certificado}` : '(sin marca especificada)'),
+          new TextRun(
+            marca?.numero_anmat
+              ? `Especialidad médica aprobada por ANMAT con Nº de certificado ${marca.numero_anmat}`
+              : '(sin Nº de certificado ANMAT cargado para esta marca)'
+          ),
         ],
       }),
       new Paragraph({
