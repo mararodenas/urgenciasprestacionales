@@ -92,7 +92,7 @@ export async function generarInformeDocx({
     styles: {
       default: {
         document: {
-          run: { font: 'Calibri', size: 20 }, // 20 half-points = 10pt
+          run: { font: 'Calibri', size: 24 }, // 24 half-points = 12pt
         },
       },
     },
@@ -122,7 +122,7 @@ export async function generarInformeDocx({
 
           ...gestionParagraphs,
 
-          new Paragraph({ spacing: { before: 160 }, children: [new TextRun({ text: CIERRE[tipo], bold: true })] }),
+          new Paragraph({ spacing: { before: 160 }, children: [new TextRun({ text: CIERRE[tipo], bold: true, underline: {} })] }),
         ],
       },
     ],
