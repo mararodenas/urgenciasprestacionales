@@ -47,6 +47,7 @@ export default function ExpedienteForm() {
   const [plantillas, setPlantillas] = useState([]);
   const [drogasSeleccionadas, setDrogasSeleccionadas] = useState([]); // [{droga_id, fundamentacion}]
   const [drogasAsociadasPatologia, setDrogasAsociadasPatologia] = useState([]); // [{droga_id, nombre, fundamentacion_texto}]
+  const [afiliadoEsDenunciante, setAfiliadoEsDenunciante] = useState(true);
   const [adjuntos, setAdjuntos] = useState([]);
   const [informesGenerados, setInformesGenerados] = useState([]);
   const [loading, setLoading] = useState(!isNew);
@@ -59,7 +60,18 @@ export default function ExpedienteForm() {
 
   useEffect(() => {
     loadCatalogos();
-    if (!isNew) loadExpediente();
+    if (!isNew) {
+      loadExpediente();
+    } else {
+      // reset total al navegar de un expediente existente a "Nuevo" sin recargar la página
+      setForm(emptyForm);
+      setDrogasSeleccionadas([]);
+      setDrogasAsociadasPatologia([]);
+      setAdjuntos([]);
+      setInformesGenerados([]);
+      setAfiliadoEsDenunciante(true);
+      setLoading(false);
+    }
   }, [id]);
 
   async function loadCatalogos() {
@@ -80,7 +92,13 @@ export default function ExpedienteForm() {
   async function loadExpediente() {
     setLoading(true);
     const { data: exp } = await supabase.from('expedientes').select('*').eq('id', id).single();
-    if (exp) setForm(exp);
+    if (exp) {
+      setForm(exp);
+      const mismoDenunciante =
+        !exp.denunciante_nombre?.trim() ||
+        (exp.denunciante_nombre === exp.nombre_paciente && (exp.denunciante_dni_cuit ?? '') === (exp.dni_cuit_paciente ?? ''));
+      setAfiliadoEsDenunciante(mismoDenunciante);
+    }
     if (exp?.patologia_id) cargarDrogasAsociadas(exp.patologia_id);
 
     const { data: meds } = await supabase
@@ -269,15 +287,11 @@ export default function ExpedienteForm() {
     navigate('/');
   }
 
-  async function handleUsarDatosAfiliado() {
-    if (form.denunciante_nombre?.trim() || form.denunciante_dni_cuit?.trim()) {
-      const ok = await confirmAction(
-        'Ya hay datos cargados en Denunciante y se van a reemplazar por los del afiliado. Esta acción no se puede deshacer.',
-        { title: 'Usar los datos del afiliado', confirmLabel: 'Sí, reemplazar' }
-      );
-      if (!ok) return;
+  function handleAfiliadoEsDenuncianteChange(esAfiliado) {
+    setAfiliadoEsDenunciante(esAfiliado);
+    if (esAfiliado) {
+      setForm((f) => ({ ...f, denunciante_nombre: '', denunciante_dni_cuit: '' }));
     }
-    setForm((f) => ({ ...f, denunciante_nombre: f.nombre_paciente, denunciante_dni_cuit: f.dni_cuit_paciente }));
   }
 
   async function handleSave() {
@@ -291,6 +305,10 @@ export default function ExpedienteForm() {
     }
     setSaving(true);
     const payload = { ...form };
+    if (afiliadoEsDenunciante) {
+      payload.denunciante_nombre = '';
+      payload.denunciante_dni_cuit = '';
+    }
     delete payload.patologias;
     delete payload.obras_sociales;
     delete payload.informes;
@@ -504,11 +522,22 @@ export default function ExpedienteForm() {
               </option>
             </select>
           </div>
+          <div className="field span-4">
+            <label>Obra Social / EMP <span className="hint">(buscar por RNAS o RNEMP)</span></label>
+            <ObraSocialCodeSelector
+              obrasSociales={obrasSociales}
+              value={form.obra_social_id}
+              onChange={(id) => setField('obra_social_id', id)}
+              onCrear={abrirCrearObraSocial}
+              filialValue={form.filial_id}
+              onFilialChange={(fid) => setField('filial_id', fid)}
+            />
+          </div>
         </div>
 
-        <div className="section-title">Datos filiatorios</div>
+        <div className="section-title">Datos del afiliado</div>
         <div className="form-grid">
-          <div className="field span-2">
+          <div className="field">
             <label>Nombre del paciente</label>
             <input value={form.nombre_paciente} onChange={(e) => setField('nombre_paciente', e.target.value)} />
           </div>
@@ -520,48 +549,50 @@ export default function ExpedienteForm() {
             <label>Teléfono</label>
             <input value={form.telefono_paciente ?? ''} onChange={(e) => setField('telefono_paciente', e.target.value)} />
           </div>
-          <div className="field span-2">
+          <div className="field">
             <label>Email</label>
             <input value={form.email_paciente ?? ''} onChange={(e) => setField('email_paciente', e.target.value)} />
           </div>
-        </div>
-
-        <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <span>Denunciante <span className="hint">(si es distinto del afiliado)</span></span>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            style={{ fontSize: 12 }}
-            onClick={handleUsarDatosAfiliado}
-          >
-            Usar los datos del afiliado
-          </button>
-        </div>
-        <div className="form-grid">
-          <div className="field span-2">
-            <label>Nombre del denunciante</label>
-            <input value={form.denunciante_nombre ?? ''} onChange={(e) => setField('denunciante_nombre', e.target.value)} />
-          </div>
-          <div className="field span-2">
-            <label>DNI / CUIT <span className="hint">(opcional)</span></label>
-            <input value={form.denunciante_dni_cuit ?? ''} onChange={(e) => setField('denunciante_dni_cuit', e.target.value)} />
-          </div>
-        </div>
-
-        <div className="section-title">Obra Social / EMP</div>
-        <div className="form-grid">
           <div className="field span-4">
-            <label>Entidad (buscar por RNAS o RNEMP)</label>
-            <ObraSocialCodeSelector
-              obrasSociales={obrasSociales}
-              value={form.obra_social_id}
-              onChange={(id) => setField('obra_social_id', id)}
-              onCrear={abrirCrearObraSocial}
-              filialValue={form.filial_id}
-              onFilialChange={(fid) => setField('filial_id', fid)}
-            />
+            <label>¿El afiliado es el denunciante?</label>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 400 }}>
+                <input
+                  type="radio"
+                  name="afiliado_es_denunciante"
+                  checked={afiliadoEsDenunciante}
+                  onChange={() => handleAfiliadoEsDenuncianteChange(true)}
+                />
+                Sí
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 400 }}>
+                <input
+                  type="radio"
+                  name="afiliado_es_denunciante"
+                  checked={!afiliadoEsDenunciante}
+                  onChange={() => handleAfiliadoEsDenuncianteChange(false)}
+                />
+                No
+              </label>
+            </div>
           </div>
         </div>
+
+        {!afiliadoEsDenunciante && (
+          <>
+            <div className="section-title">Denunciante</div>
+            <div className="form-grid">
+              <div className="field span-2">
+                <label>Nombre del denunciante</label>
+                <input value={form.denunciante_nombre ?? ''} onChange={(e) => setField('denunciante_nombre', e.target.value)} />
+              </div>
+              <div className="field span-2">
+                <label>DNI / CUIT <span className="hint">(opcional)</span></label>
+                <input value={form.denunciante_dni_cuit ?? ''} onChange={(e) => setField('denunciante_dni_cuit', e.target.value)} />
+              </div>
+            </div>
+          </>
+        )}
 
         <div className="section-title">Solicitud
           <HelpTip title="Solicitud">
