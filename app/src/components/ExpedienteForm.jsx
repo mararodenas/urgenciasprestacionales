@@ -48,6 +48,15 @@ export default function ExpedienteForm() {
   const [drogasSeleccionadas, setDrogasSeleccionadas] = useState([]); // [{droga_id, fundamentacion}]
   const [drogasAsociadasPatologia, setDrogasAsociadasPatologia] = useState([]); // [{droga_id, nombre, fundamentacion_texto}]
   const [afiliadoEsDenunciante, setAfiliadoEsDenunciante] = useState(true);
+  const [abiertas, setAbiertas] = useState({
+    expediente: true,
+    afiliado: true,
+    solicitud: true,
+    drogas: true,
+    analisis: true,
+    dictamen: true,
+  });
+  const toggleAbierta = (key) => setAbiertas((a) => ({ ...a, [key]: !a[key] }));
   const [adjuntos, setAdjuntos] = useState([]);
   const [informesGenerados, setInformesGenerados] = useState([]);
   const [loading, setLoading] = useState(!isNew);
@@ -494,7 +503,15 @@ export default function ExpedienteForm() {
       </div>
 
       <div className="card card-pad">
-        <div className="section-title section-title-flush">Expediente</div>
+        <div
+          className="section-title section-title-flush"
+          style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}
+          onClick={() => toggleAbierta('expediente')}
+        >
+          <span>Expediente</span>
+          <span style={{ fontSize: 12, fontWeight: 400 }}>{abiertas.expediente ? 'Colapsar ▲' : 'Expandir ▾'}</span>
+        </div>
+        {abiertas.expediente && (
         <div className="form-grid">
           <div className="field">
             <label>N° EE</label>
@@ -534,8 +551,17 @@ export default function ExpedienteForm() {
             />
           </div>
         </div>
+        )}
 
-        <div className="section-title">Datos del afiliado</div>
+        <div
+          className="section-title"
+          style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}
+          onClick={() => toggleAbierta('afiliado')}
+        >
+          <span>Datos del afiliado</span>
+          <span style={{ fontSize: 12, fontWeight: 400 }}>{abiertas.afiliado ? 'Colapsar ▲' : 'Expandir ▾'}</span>
+        </div>
+        {abiertas.afiliado && (
         <div className="form-grid">
           <div className="field">
             <label>Nombre del paciente</label>
@@ -553,9 +579,9 @@ export default function ExpedienteForm() {
             <label>Email</label>
             <input value={form.email_paciente ?? ''} onChange={(e) => setField('email_paciente', e.target.value)} />
           </div>
-          <div className="field span-4">
+          <div className="field">
             <label>¿El afiliado es el denunciante?</label>
-            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center', height: 38 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 400 }}>
                 <input
                   type="radio"
@@ -576,32 +602,39 @@ export default function ExpedienteForm() {
               </label>
             </div>
           </div>
-        </div>
-
-        {!afiliadoEsDenunciante && (
-          <>
-            <div className="section-title">Denunciante</div>
-            <div className="form-grid">
-              <div className="field span-2">
+          {!afiliadoEsDenunciante && (
+            <>
+              <div className="field">
                 <label>Nombre del denunciante</label>
                 <input value={form.denunciante_nombre ?? ''} onChange={(e) => setField('denunciante_nombre', e.target.value)} />
               </div>
-              <div className="field span-2">
+              <div className="field">
                 <label>DNI / CUIT <span className="hint">(opcional)</span></label>
                 <input value={form.denunciante_dni_cuit ?? ''} onChange={(e) => setField('denunciante_dni_cuit', e.target.value)} />
               </div>
-            </div>
-          </>
+            </>
+          )}
+        </div>
         )}
 
-        <div className="section-title">Solicitud
-          <HelpTip title="Solicitud">
-            Acá cargás qué pide el caso: la <strong>Patología</strong> (determina qué drogas te sugiere el sistema),
-            el <strong>Diagnóstico</strong> del médico tratante (va textual en el informe), el <strong>Motivo de la denuncia</strong>
-            (va en negrita en el encabezado del IFSOL/IFDER) y opcionalmente un <strong>Resumen de historia clínica</strong>.
-            Debajo elegís la o las drogas involucradas.
-          </HelpTip>
+        <div
+          className="section-title"
+          style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}
+          onClick={() => toggleAbierta('solicitud')}
+        >
+          <span>
+            Solicitud
+            <HelpTip title="Solicitud">
+              Acá cargás qué pide el caso: la <strong>Patología</strong> (determina qué drogas te sugiere el sistema),
+              el <strong>Diagnóstico</strong> del médico tratante (va textual en el informe), el <strong>Motivo de la denuncia</strong>
+              (va en negrita en el encabezado del IFSOL/IFDER) y opcionalmente un <strong>Resumen de historia clínica</strong>.
+              Debajo elegís la o las drogas involucradas.
+            </HelpTip>
+          </span>
+          <span style={{ fontSize: 12, fontWeight: 400 }}>{abiertas.solicitud ? 'Colapsar ▲' : 'Expandir ▾'}</span>
         </div>
+        {abiertas.solicitud && (
+        <>
         <div className="form-grid">
           <div className="field span-2">
             <label>Patología</label>
@@ -681,19 +714,29 @@ export default function ExpedienteForm() {
             createLabel="Crear droga"
           />
         </div>
+        </>
+        )}
 
         {drogasSeleccionadas.length > 0 && (
           <>
-            <div className="section-title">Explicación de la droga
-              <HelpTip title="Explicación de la droga">
-                Por cada droga elegida: la <strong>Marca comercial</strong> usada (trae su propio N° de Certificado ANMAT),
-                el <strong>Código ATC</strong> y <strong>Descripción ANMAT</strong> (datos generales de la droga, se editan
-                acá o desde Catálogo drogas), y las <strong>Indicaciones médicas / mecanismo de acción</strong> para esta
-                patología puntual — este último texto se autocompleta si ya se cargó antes esa combinación droga+patología,
-                y es el que va en el informe.
-              </HelpTip>
+            <div
+              className="section-title"
+              style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}
+              onClick={() => toggleAbierta('drogas')}
+            >
+              <span>
+                Explicación de la droga
+                <HelpTip title="Explicación de la droga">
+                  Por cada droga elegida: la <strong>Marca comercial</strong> usada (trae su propio N° de Certificado ANMAT),
+                  el <strong>Código ATC</strong> y <strong>Descripción ANMAT</strong> (datos generales de la droga, se editan
+                  acá o desde Catálogo drogas), y las <strong>Indicaciones médicas / mecanismo de acción</strong> para esta
+                  patología puntual — este último texto se autocompleta si ya se cargó antes esa combinación droga+patología,
+                  y es el que va en el informe.
+                </HelpTip>
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 400 }}>{abiertas.drogas ? 'Colapsar ▲' : 'Expandir ▾'}</span>
             </div>
-            {drogasSeleccionadas.map((d) => {
+            {abiertas.drogas && drogasSeleccionadas.map((d) => {
               const info = drogasCatalogo.find((c) => c.id === d.droga_id);
               const marcasDeEsta = marcasCatalogo.filter((m) => m.droga_id === d.droga_id);
               const marcaElegida = marcasDeEsta.find((m) => m.id === d.marca_id);
@@ -762,15 +805,25 @@ export default function ExpedienteForm() {
           </>
         )}
 
-        <div className="section-title">Análisis
-          <HelpTip title="Análisis">
-            Acá va la <strong>Gestión realizada</strong>: el relato de las acciones que hizo GCP para resolver el caso
-            (fecha de notificación al Agente de Seguro, respuesta recibida, contacto con el denunciante, etc.). Este texto
-            va tal cual en el informe, justo antes del cierre. Podés pegar capturas de pantalla (Ctrl+V) directo adentro
-            del cuadro y quedan incrustadas en el Word. Debajo podés adjuntar archivos de evidencia aparte (no se incluyen
-            en el Word, quedan como respaldo).
-          </HelpTip>
+        <div
+          className="section-title"
+          style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}
+          onClick={() => toggleAbierta('analisis')}
+        >
+          <span>
+            Análisis
+            <HelpTip title="Análisis">
+              Acá va la <strong>Gestión realizada</strong>: el relato de las acciones que hizo GCP para resolver el caso
+              (fecha de notificación al Agente de Seguro, respuesta recibida, contacto con el denunciante, etc.). Este texto
+              va tal cual en el informe, justo antes del cierre. Podés pegar capturas de pantalla (Ctrl+V) directo adentro
+              del cuadro y quedan incrustadas en el Word. Debajo podés adjuntar archivos de evidencia aparte (no se incluyen
+              en el Word, quedan como respaldo).
+            </HelpTip>
+          </span>
+          <span style={{ fontSize: 12, fontWeight: 400 }}>{abiertas.analisis ? 'Colapsar ▲' : 'Expandir ▾'}</span>
         </div>
+        {abiertas.analisis && (
+        <>
         <div className="field span-4" style={{ marginBottom: 16 }}>
           <label>Gestión realizada <span className="hint">(acciones de GCP para la resolución del caso — va en el informe)</span></label>
           <RichTextEditor
@@ -814,15 +867,27 @@ export default function ExpedienteForm() {
         ) : (
           <p className="hint">Guardá el expediente para poder adjuntar archivos.</p>
         )}
+        </>
+        )}
 
-        <div className="section-title">Dictamen
-          <HelpTip title="Dictamen">
-            Elegí la <strong>Plantilla</strong> según el tipo de caso (por ejemplo "Oncología") — trae el texto normativo
-            fijo que va antes y después del diagnóstico. Después generá el <strong>IFSOL</strong> (si la Obra Social
-            respondió/resolvió) o el <strong>IFDER</strong> (si no respondió) — se descarga el .docx y además queda un
-            link acá abajo para volver a abrirlo. Solo se guarda el último de cada tipo.
-          </HelpTip>
+        <div
+          className="section-title"
+          style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}
+          onClick={() => toggleAbierta('dictamen')}
+        >
+          <span>
+            Dictamen
+            <HelpTip title="Dictamen">
+              Elegí la <strong>Plantilla</strong> según el tipo de caso (por ejemplo "Oncología") — trae el texto normativo
+              fijo que va antes y después del diagnóstico. Después generá el <strong>IFSOL</strong> (si la Obra Social
+              respondió/resolvió) o el <strong>IFDER</strong> (si no respondió) — se descarga el .docx y además queda un
+              link acá abajo para volver a abrirlo. Solo se guarda el último de cada tipo.
+            </HelpTip>
+          </span>
+          <span style={{ fontSize: 12, fontWeight: 400 }}>{abiertas.dictamen ? 'Colapsar ▲' : 'Expandir ▾'}</span>
         </div>
+        {abiertas.dictamen && (
+        <>
         {!isNew ? (
           <>
             <div className="dictamen-bar">
@@ -861,6 +926,8 @@ export default function ExpedienteForm() {
           </>
         ) : (
           <p className="hint">Guardá el expediente para poder generar el informe.</p>
+        )}
+        </>
         )}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--line)' }}>
