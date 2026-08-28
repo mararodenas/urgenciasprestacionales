@@ -223,15 +223,24 @@ export default function DrogaForm() {
                     placeholder="Nombre comercial"
                     value={nuevaMarca.nombre_comercial}
                     onChange={(e) => setNuevaMarca((f) => ({ ...f, nombre_comercial: e.target.value }))}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); crearMarca(); } }}
                   />
                 </div>
                 <div className="field">
                   <label>N° Certificado ANMAT</label>
-                  <input value={nuevaMarca.numero_anmat} onChange={(e) => setNuevaMarca((f) => ({ ...f, numero_anmat: e.target.value }))} />
+                  <input
+                    value={nuevaMarca.numero_anmat}
+                    onChange={(e) => setNuevaMarca((f) => ({ ...f, numero_anmat: e.target.value }))}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); crearMarca(); } }}
+                  />
                 </div>
                 <div className="field">
                   <label>Laboratorio</label>
-                  <input value={nuevaMarca.laboratorio} onChange={(e) => setNuevaMarca((f) => ({ ...f, laboratorio: e.target.value }))} />
+                  <input
+                    value={nuevaMarca.laboratorio}
+                    onChange={(e) => setNuevaMarca((f) => ({ ...f, laboratorio: e.target.value }))}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); crearMarca(); } }}
+                  />
                 </div>
                 <div className="field" style={{ justifyContent: 'flex-end' }}>
                   <button className="btn btn-primary" onClick={crearMarca}>+ Agregar marca</button>
